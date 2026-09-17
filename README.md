@@ -2,6 +2,42 @@
 
 Local FastAPI proxy for reducing LLM token spend with semantic caching, provider fallback, and live usage metrics.
 
+## Quickstart for Teammates
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/Jawad000000/token-shield.git
+cd token-shield
+
+# Create and activate virtual environment (optional but recommended)
+python -m venv .venv
+# On Windows:
+.venv\Scripts\activate
+# On macOS/Linux:
+source .venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### 2. Configure Environment
+```bash
+# On Windows:
+copy .env.example .env.local
+# On macOS/Linux:
+cp .env.example .env.local
+```
+Add your provider API keys (Google, Groq, Vercel, etc.) inside `.env.local`.
+
+### 3. Run Server
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+### 4. Run Test Suite (48 Tests Passing)
+```bash
+python -m pytest -p no:cacheprovider --basetemp=.tokenshield/pytest_temp -v
+```
+
 ## Secret Setup
 
 Do not paste API keys into chat or commit them. Add keys locally in `.env.local`:
