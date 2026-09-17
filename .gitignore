@@ -1,0 +1,6 @@
+.env.local
+node_modules/
+.tokenshield/
+.pytest_cache/
+__pycache__/
+*.pyc

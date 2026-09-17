@@ -1,0 +1,16 @@
+{
+  "name": "tokenshield-ai-gateway-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx --env-file=.env.local index.ts"
+  },
+  "dependencies": {
+    "@types/node": "^22.20.3",
+    "ai": "^7.0.102",
+    "dotenv": "^17.4.2",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

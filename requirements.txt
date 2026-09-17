@@ -1,0 +1,7 @@
+fastapi
+httpx
+pytest
+uvicorn
+# Optional: real sentence-transformers backend (all-MiniLM-L6-v2)
+sentence-transformers
+
