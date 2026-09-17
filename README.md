@@ -1,6 +1,7 @@
 # TokenShield
 
-Local FastAPI proxy for reducing LLM token spend with semantic caching, provider fallback, and live usage metrics.
+**The Auditable LLM Token Optimization Proxy.**
+Get a transparent, per-request **Token Receipt** attributing exact savings across multi-tier semantic caching, lossless log folding, AST code pruning, Guard Mode credential redaction, and intelligent provider routing—without destroying response quality.
 
 ## Quickstart for Teammates
 

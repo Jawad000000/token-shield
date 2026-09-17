@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,7 @@ from typing import Any
 class Database:
     def __init__(self, path: str) -> None:
         self.path = path
+        self._lock = threading.Lock()
         db_path = Path(path)
         db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(db_path, check_same_thread=False)
@@ -135,15 +137,16 @@ class Database:
         provider: str,
         question_hash: str | None = None,
     ) -> int:
-        cursor = self._conn.execute(
-            """
-            insert into cache_entries(question, question_hash, answer, vector_json, model, provider)
-            values (?, ?, ?, ?, ?, ?)
-            """,
-            (question, question_hash, answer, json.dumps(vector), model, provider),
-        )
-        self._conn.commit()
-        return int(cursor.lastrowid)
+        with self._lock:
+            cursor = self._conn.execute(
+                """
+                insert into cache_entries(question, question_hash, answer, vector_json, model, provider)
+                values (?, ?, ?, ?, ?, ?)
+                """,
+                (question, question_hash, answer, json.dumps(vector), model, provider),
+            )
+            self._conn.commit()
+            return int(cursor.lastrowid)
 
     def exact_lookup(self, question_hash: str) -> dict[str, Any] | None:
         if not question_hash:
@@ -159,18 +162,20 @@ class Database:
         return [dict(row) for row in rows]
 
     def mark_cache_hit(self, entry_id: int) -> None:
-        self._conn.execute("update cache_entries set hit_count = hit_count + 1 where id = ?", (entry_id,))
-        self._conn.commit()
+        with self._lock:
+            self._conn.execute("update cache_entries set hit_count = hit_count + 1 where id = ?", (entry_id,))
+            self._conn.commit()
 
     def save_code_snapshot(self, session_id: str, file_key: str, code: str) -> None:
-        self._conn.execute(
-            """
-            insert into code_snapshots(session_id, file_key, code)
-            values (?, ?, ?)
-            """,
-            (session_id, file_key, code),
-        )
-        self._conn.commit()
+        with self._lock:
+            self._conn.execute(
+                """
+                insert into code_snapshots(session_id, file_key, code)
+                values (?, ?, ?)
+                """,
+                (session_id, file_key, code),
+            )
+            self._conn.commit()
 
     def get_latest_code_snapshot(self, session_id: str, file_key: str) -> str | None:
         row = self._conn.execute(
@@ -210,44 +215,45 @@ class Database:
         logs_folded: int = 0,
         json_compressed: int = 0,
     ) -> None:
-        self._conn.execute(
-            """
-            insert into request_logs(
-                request_id, session_id, provider, model, cache_hit, raw_input_tokens,
-                optimized_input_tokens, upstream_input_tokens, output_tokens, saved_tokens,
-                strategies_json, failover_used, secrets_redacted, pii_redacted, guard_mode,
-                budget_mode, notes_deduplicated, turns_shrunk, cache, provider_attempts_json,
-                code_pruned, logs_folded, json_compressed
+        with self._lock:
+            self._conn.execute(
+                """
+                insert into request_logs(
+                    request_id, session_id, provider, model, cache_hit, raw_input_tokens,
+                    optimized_input_tokens, upstream_input_tokens, output_tokens, saved_tokens,
+                    strategies_json, failover_used, secrets_redacted, pii_redacted, guard_mode,
+                    budget_mode, notes_deduplicated, turns_shrunk, cache, provider_attempts_json,
+                    code_pruned, logs_folded, json_compressed
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    request_id,
+                    session_id,
+                    provider,
+                    model,
+                    int(cache_hit),
+                    raw_input_tokens,
+                    optimized_input_tokens,
+                    upstream_input_tokens,
+                    output_tokens,
+                    saved_tokens,
+                    json.dumps(strategies),
+                    int(failover_used),
+                    secrets_redacted,
+                    pii_redacted,
+                    guard_mode,
+                    budget_mode,
+                    notes_deduplicated,
+                    turns_shrunk,
+                    cache,
+                    json.dumps(provider_attempts or []),
+                    code_pruned,
+                    logs_folded,
+                    json_compressed,
+                ),
             )
-            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                request_id,
-                session_id,
-                provider,
-                model,
-                int(cache_hit),
-                raw_input_tokens,
-                optimized_input_tokens,
-                upstream_input_tokens,
-                output_tokens,
-                saved_tokens,
-                json.dumps(strategies),
-                int(failover_used),
-                secrets_redacted,
-                pii_redacted,
-                guard_mode,
-                budget_mode,
-                notes_deduplicated,
-                turns_shrunk,
-                cache,
-                json.dumps(provider_attempts or []),
-                code_pruned,
-                logs_folded,
-                json_compressed,
-            ),
-        )
-        self._conn.commit()
+            self._conn.commit()
 
     def get_receipt(self, request_id: str) -> dict[str, Any] | None:
         row = self._conn.execute(
@@ -376,15 +382,16 @@ class Database:
         cache_hit: bool,
         cache_type: str = "MISS",
     ) -> int:
-        cursor = self._conn.execute(
-            """
-            insert into study_events(session_id, request_id, topic, question, answer, cache_hit, cache_type)
-            values (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (session_id, request_id, topic, question, answer, int(cache_hit), cache_type),
-        )
-        self._conn.commit()
-        return int(cursor.lastrowid)
+        with self._lock:
+            cursor = self._conn.execute(
+                """
+                insert into study_events(session_id, request_id, topic, question, answer, cache_hit, cache_type)
+                values (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (session_id, request_id, topic, question, answer, int(cache_hit), cache_type),
+            )
+            self._conn.commit()
+            return int(cursor.lastrowid)
 
     def get_session_study_events(self, session_id: str) -> list[dict[str, Any]]:
         rows = self._conn.execute(

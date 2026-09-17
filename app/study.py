@@ -148,6 +148,7 @@ def generate_study_package(
                     "topic": t,
                     "question": f"In {t}: {clean_q}",
                     "expected_answer": key_answer,
+                    "answer": key_answer,
                 })
                 quiz_id += 1
 
@@ -195,6 +196,12 @@ def generate_study_package(
         "cache_hit_rate": round(cache_hit_rate, 4),
         "topics_covered": topics_covered,
         "struggling_topics": weak_topics,
+        "weak_topics": weak_topics,
+        "telemetry": {
+            "requests_count": total_requests,
+            "tokens_saved": stats.get("saved_tokens", 0),
+            "secrets_redacted": stats.get("secrets_redacted", 0) + stats.get("pii_redacted", 0),
+        },
         "flashcards": flashcards,
         "mini_quiz": mini_quiz,
         "revision_sheet": revision_sheet,

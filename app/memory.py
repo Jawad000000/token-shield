@@ -50,12 +50,13 @@ def deduplicate_session_notes(
             for para in paragraphs:
                 block_hash = _hash_block(para)
                 if block_hash in known_notes:
-                    # Replace with reference
-                    ref_tag = f"[Reference: note_{block_hash}]"
+                    snippet = known_notes[block_hash]
+                    ref_tag = f"[Reference: note_{block_hash} | Context: \"{snippet}...\"]"
                     modified_content = modified_content.replace(para, ref_tag)
                     dedup_count += 1
                 else:
-                    known_notes[block_hash] = para[:60]
+                    clean_p = " ".join(para.strip().split())
+                    known_notes[block_hash] = clean_p[:100]
 
             cloned["content"] = modified_content
 
@@ -69,11 +70,13 @@ def deduplicate_session_notes(
                     for para in paragraphs:
                         block_hash = _hash_block(para)
                         if block_hash in known_notes:
-                            ref_tag = f"[Reference: note_{block_hash}]"
+                            snippet = known_notes[block_hash]
+                            ref_tag = f"[Reference: note_{block_hash} | Context: \"{snippet}...\"]"
                             modified_text = modified_text.replace(para, ref_tag)
                             dedup_count += 1
                         else:
-                            known_notes[block_hash] = para[:60]
+                            clean_p = " ".join(para.strip().split())
+                            known_notes[block_hash] = clean_p[:100]
                     cloned_item = dict(item)
                     cloned_item["text"] = modified_text
                     new_content.append(cloned_item)

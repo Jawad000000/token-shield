@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>TokenShield: Academic AI Workspace</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+    }
+    ::-webkit-scrollbar { display: none; }
+    .flashcard { perspective: 1000px; }
+    .flashcard-inner { transition: transform 0.4s; transform-style: preserve-3d; }
+    .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+    .flashcard-front, .flashcard-back { backface-visibility: hidden; }
+    .flashcard-back { transform: rotateY(180deg); }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#f8f9ff",
+            "surface-dim": "#cbdbf5",
+            "surface-bright": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "surface-container": "#e5eeff",
+            "surface-container-high": "#dce9ff",
+            "surface-container-highest": "#d3e4fe",
+            "on-surface": "#0b1c30",
+            "on-surface-variant": "#434655",
+            "outline": "#737686",
+            "outline-variant": "#c3c6d7",
+            "primary": "#004ac6",
+            "primary-container": "#2563eb",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#eeefff",
+            "secondary": "#006c49",
+            "secondary-container": "#6cf8bb",
+            "on-secondary": "#ffffff",
+            "on-secondary-container": "#00714d",
+            "secondary-fixed": "#6ffbbe",
+            "on-secondary-fixed": "#002113",
+            "tertiary": "#784b00",
+            "tertiary-fixed": "#ffddb8",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a"
+          },
+          fontFamily: {
+            "headline": ["Plus Jakarta Sans", "sans-serif"],
+            "body": ["Inter", "sans-serif"],
+            "code": ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-surface dark:bg-[#090d16] font-body text-[14px] text-on-surface dark:text-[#e2e8f0] antialiased selection:bg-primary-container selection:text-white transition-colors duration-200">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="fixed left-0 top-0 h-screen w-72 bg-surface-container-lowest dark:bg-[#0f172a] z-40 flex flex-col justify-between p-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)] dark:border-r dark:border-slate-800 overflow-y-auto">
+    <div class="flex flex-col gap-4">
+      <div class="flex items-center gap-2.5 px-1 py-1">
+        <div class="w-9 h-9 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm">
+          <span class="material-symbols-outlined text-[20px]">shield</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-headline font-bold text-[18px] text-on-surface dark:text-white tracking-tight leading-none">TokenShield</span>
+          <span class="text-[11px] text-on-surface-variant dark:text-slate-400">Academic AI Workspace</span>
+        </div>
+      </div>
+
+      <button id="new-session-btn" class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-on-primary py-2.5 px-4 rounded-xl text-[13px] font-medium transition-all shadow-sm active:scale-[0.98]">
+        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+        <span>New Study Session</span>
+      </button>
+
+      <div class="flex flex-col gap-1">
+        <div class="px-2 py-1 text-[11px] font-semibold text-on-surface-variant dark:text-slate-400 uppercase tracking-wider">Workspace</div>
+        <nav class="flex flex-col gap-0.5 text-[13px]">
+          <a href="#" class="flex items-center gap-3 px-3 py-2 bg-surface-container-high dark:bg-slate-800 text-on-surface dark:text-white font-semibold rounded-xl">
+            <span class="material-symbols-outlined text-[20px] text-primary">chat_bubble</span>
+            <span>Active Session</span>
+          </a>
+          <a href="#" id="view-notes-link" class="flex items-center gap-3 px-3 py-2 rounded-xl text-on-surface-variant dark:text-slate-400 hover:bg-surface-container-low dark:hover:bg-slate-800 hover:text-on-surface dark:hover:text-white transition-colors font-medium">
+            <span class="material-symbols-outlined text-[20px]">menu_book</span>
+            <span>Saved Notes</span>
+          </a>
+          <a href="#" id="view-flashcards-link" class="flex items-center gap-3 px-3 py-2 rounded-xl text-on-surface-variant dark:text-slate-400 hover:bg-surface-container-low dark:hover:bg-slate-800 hover:text-on-surface dark:hover:text-white transition-colors font-medium">
+            <span class="material-symbols-outlined text-[20px]">style</span>
+            <span>Flashcards</span>
+          </a>
+          <a href="/metrics/live" target="_blank" class="flex items-center gap-3 px-3 py-2 rounded-xl text-on-surface-variant dark:text-slate-400 hover:bg-surface-container-low dark:hover:bg-slate-800 hover:text-on-surface dark:hover:text-white transition-colors font-medium">
+            <span class="material-symbols-outlined text-[20px]">insights</span>
+            <span>Live Metrics JSON</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <div class="px-2 py-1 text-[11px] font-semibold text-on-surface-variant dark:text-slate-400 uppercase tracking-wider">Topics in Session</div>
+        <div id="topics-list" class="flex flex-col gap-1 text-[12px]">
+          <span class="text-outline px-3 py-1 italic">No questions asked yet</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-2.5 pt-4">
+      <!-- Live Shield Efficiency Widget -->
+      <div class="rounded-xl bg-surface-container-low dark:bg-slate-800/80 p-3 flex flex-col gap-2 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] text-on-surface dark:text-slate-200 font-semibold">Daily Shield Efficiency</span>
+          <span id="sidebar-cache-rate" class="font-code text-[11px] text-secondary font-medium">0% Cache</span>
+        </div>
+        <div class="flex items-center justify-between font-code text-[11px] text-on-surface-variant dark:text-slate-400">
+          <span>Saved Total</span>
+          <span id="sidebar-tokens-saved" class="font-medium text-on-surface dark:text-slate-200">0 tok</span>
+        </div>
+        <div class="flex items-center justify-between font-code text-[11px] text-on-surface-variant dark:text-slate-400">
+          <span>Secrets Redacted</span>
+          <span id="sidebar-redactions" class="font-medium text-on-surface dark:text-slate-200">0</span>
+        </div>
+      </div>
+
+      <!-- Active Provider Waterfall Widget -->
+      <div class="rounded-xl bg-surface-container-lowest dark:bg-slate-800 p-2.5 flex items-center justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="w-2.5 h-2.5 rounded-full bg-secondary shrink-0 animate-pulse"></span>
+          <div class="flex flex-col min-w-0">
+            <span id="active-provider-name" class="text-[12px] text-on-surface dark:text-slate-200 font-medium truncate">Primary Provider</span>
+            <span id="fallback-provider-list" class="font-code text-[10px] text-outline truncate">Checking waterfall...</span>
+          </div>
+        </div>
+        <a href="/providers/status" target="_blank" title="Inspect Waterfall Status" class="text-outline hover:text-primary">
+          <span class="material-symbols-outlined text-[16px]">tune</span>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <div class="pl-72">
+    <!-- TOP APP BAR -->
+    <header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 dark:bg-[#090d16]/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] dark:border-b dark:border-slate-800 z-30 flex items-center justify-between px-6">
+      <div class="flex items-center gap-4">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high dark:bg-slate-800 text-on-surface dark:text-white">
+          <span class="material-symbols-outlined text-primary text-[18px]">school</span>
+          <span id="header-topic" class="text-[13px] font-semibold">General Study Workspace</span>
+        </div>
+        <div class="hidden lg:flex items-center gap-1.5 text-[12px] text-on-surface-variant dark:text-slate-400">
+          <span class="w-2 h-2 rounded-full bg-secondary"></span>
+          <span>Zero-Leak Guard Active</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <!-- Daily Budget Widget -->
+        <div class="flex items-center gap-3 bg-surface-container-lowest dark:bg-slate-800 px-3 py-1.5 rounded-full shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center justify-between gap-4 text-[11px]">
+              <span class="text-on-surface-variant dark:text-slate-400">Daily Free Quota</span>
+              <span id="top-budget-label" class="font-code text-on-surface dark:text-slate-200 font-medium">50k tok</span>
+            </div>
+            <div class="w-36 h-1.5 bg-surface-container dark:bg-slate-700 rounded-full overflow-hidden flex">
+              <div id="top-budget-bar-used" class="bg-primary h-full w-[0%] transition-all duration-500"></div>
+              <div id="top-budget-bar-saved" class="bg-secondary h-full w-[0%] transition-all duration-500"></div>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-secondary text-[18px]">battery_charging_full</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Dark Mode Toggle Button -->
+          <button id="dark-mode-toggle" title="Toggle Dark/Light Mode" class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant dark:text-slate-300 hover:bg-surface-container dark:hover:bg-slate-800 transition-colors">
+            <span class="material-symbols-outlined text-[20px]" id="theme-icon">dark_mode</span>
+          </button>
+          <button id="refresh-metrics-btn" title="Refresh Live Telemetry" class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant dark:text-slate-300 hover:bg-surface-container dark:hover:bg-slate-800 transition-colors">
+            <span class="material-symbols-outlined text-[20px]">sync</span>
+          </button>
+          <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-semibold text-[13px]">
+            S
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT STREAM -->
+    <main class="relative pt-20 bg-surface dark:bg-[#090d16] w-full min-h-screen px-6 py-6">
+      <div class="flex flex-col w-full">
+        <!-- TOP METRICS & BUDGET ROW -->
+        <section class="w-full flex flex-col gap-3 mb-6">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="bg-surface-container-lowest dark:bg-[#0f172a] p-3.5 rounded-xl shadow-sm flex items-center gap-3 transition-all hover:shadow-md dark:border dark:border-slate-800">
+              <div class="w-10 h-10 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed shrink-0">
+                <span class="material-symbols-outlined text-[20px]">bolt</span>
+              </div>
+              <div class="flex flex-col min-w-0">
+                <span class="font-code text-[11px] text-secondary font-medium uppercase tracking-wider">Tokens Saved</span>
+                <span id="metric-tokens-saved" class="font-headline font-bold text-[18px] text-on-surface dark:text-white truncate">0</span>
+              </div>
+            </div>
+
+            <div class="bg-surface-container-lowest dark:bg-[#0f172a] p-3.5 rounded-xl shadow-sm flex items-center gap-3 transition-all hover:shadow-md dark:border dark:border-slate-800">
+              <div class="w-10 h-10 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary shrink-0">
+                <span class="material-symbols-outlined text-[20px]">cached</span>
+              </div>
+              <div class="flex flex-col min-w-0">
+                <span class="font-code text-[11px] text-primary font-medium uppercase tracking-wider">Cache Efficiency</span>
+                <span id="metric-cache-rate" class="font-headline font-bold text-[18px] text-on-surface dark:text-white truncate">0.0%</span>
+              </div>
+            </div>
+
+            <div class="bg-surface-container-lowest dark:bg-[#0f172a] p-3.5 rounded-xl shadow-sm flex items-center gap-3 transition-all hover:shadow-md dark:border dark:border-slate-800">
+              <div class="w-10 h-10 rounded-lg bg-surface-container-high dark:bg-slate-800 flex items-center justify-center text-primary shrink-0">
+                <span class="material-symbols-outlined text-[20px]">verified_user</span>
+              </div>
+              <div class="flex flex-col min-w-0">
+                <span class="font-code text-[11px] text-on-surface-variant dark:text-slate-400 font-medium uppercase tracking-wider">Guard Filter</span>
+                <span id="metric-redactions" class="font-headline font-bold text-[18px] text-on-surface dark:text-white truncate">0 Secrets</span>
+              </div>
+            </div>
+
+            <div class="bg-surface-container-lowest dark:bg-[#0f172a] p-3.5 rounded-xl shadow-sm flex items-center gap-3 transition-all hover:shadow-md dark:border dark:border-slate-800">
+              <div class="w-10 h-10 rounded-lg bg-tertiary-fixed flex items-center justify-center text-tertiary shrink-0">
+                <span class="material-symbols-outlined text-[20px]">timelapse</span>
+              </div>
+              <div class="flex flex-col min-w-0">
+                <span class="font-code text-[11px] text-tertiary font-medium uppercase tracking-wider">Runway Remaining</span>
+                <span id="metric-runway" class="font-headline font-bold text-[18px] text-on-surface dark:text-white truncate">~100 Qs left</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Daily AI Budget Bar & Finish Session -->
+          <div class="bg-surface-container-lowest dark:bg-[#0f172a] rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 dark:border dark:border-slate-800">
+            <div class="flex flex-col gap-1.5 flex-1 max-w-xl">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-[13px] font-semibold text-on-surface dark:text-white">Daily AI Student Budget</span>
+                  <span id="mode-badge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-secondary-fixed/50 text-secondary font-medium">
+                    <span class="w-1.5 h-1.5 rounded-full bg-secondary mr-1.5 animate-pulse"></span>
+                    Saving Mode Active
+                  </span>
+                </div>
+                <span id="quota-detail" class="font-code text-[12px] text-on-surface-variant dark:text-slate-400">0 / 50,000 tokens</span>
+              </div>
+              <div class="w-full h-2 rounded-full bg-surface-container dark:bg-slate-700 overflow-hidden flex">
+                <div id="bar-cached" class="bg-secondary h-full transition-all duration-500" style="width: 0%;" title="Cache Savings"></div>
+                <div id="bar-upstream" class="bg-primary h-full transition-all duration-500" style="width: 0%;" title="Upstream Usage"></div>
+              </div>
+              <div class="flex items-center gap-3 text-[11px] text-on-surface-variant dark:text-slate-400">
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-secondary"></span> Free Semantic Cache</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span> Upstream LLM</span>
+                <span class="flex items-center gap-1 text-outline"><span class="w-2 h-2 rounded-full bg-surface-container dark:bg-slate-700"></span> Remaining</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+              <div class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-400 text-[12px]">
+                <span class="material-symbols-outlined text-[16px] text-secondary">tune</span>
+                <span>AST Diff &amp; Log Folding On</span>
+              </div>
+              <button id="finish-session-btn" class="flex items-center gap-1.5 bg-surface-container-high dark:bg-slate-700 hover:bg-surface-container-highest text-primary dark:text-primary-fixed px-3.5 py-2 rounded-lg text-[13px] font-medium transition-all active:scale-[0.98]">
+                <span class="material-symbols-outlined text-[18px]">fact_check</span>
+                <span>Finish Session</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- WORKSPACE SPLIT (Chat Stream + TokenShield Receipt Drawer) -->
+        <div class="w-full grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          <!-- CHAT INTERFACE (LEFT / CENTER) -->
+          <section class="xl:col-span-7 flex flex-col gap-4">
+            <!-- Messages Container -->
+            <div id="chat-stream" class="space-y-4">
+              <!-- Welcome Initial Message -->
+              <div class="flex gap-3 items-start pr-4">
+                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary shrink-0 shadow-sm">
+                  <span class="material-symbols-outlined text-[18px]">smart_toy</span>
+                </div>
+                <div class="flex flex-col gap-2 max-w-2xl">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[12px] font-semibold text-on-surface dark:text-white">TokenShield AI</span>
+                    <span class="text-[11px] text-on-surface-variant dark:text-slate-400">Live Active Proxy</span>
+                  </div>
+                  <div class="bg-surface-container-lowest dark:bg-[#0f172a] p-4 rounded-2xl rounded-tl-sm shadow-sm dark:border dark:border-slate-800 space-y-2">
+                    <p class="text-[14px] text-on-surface dark:text-slate-200">
+                      Welcome to your <strong>TokenShield Workspace</strong>! Ask any question, paste code with bugs, or test with noisy logs.
+                    </p>
+                    <p class="text-[13px] text-on-surface-variant dark:text-slate-400">
+                      • <strong>Guard Mode</strong> strips API keys &amp; emails before sending upstream.<br/>
+                      • <strong>Lossless Log Folding</strong> folds 20–50 lines of repetitive terminal/compiler noise.<br/>
+                      • <strong>JSON SmartCrusher</strong> strips whitespace and formats tables with zero loss.<br/>
+                      • <strong>Semantic Cache</strong> fulfills repeat questions instantly with 0 tokens.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="chat-loading" class="hidden flex gap-3 items-start pr-4">
+              <div class="w-8 h-8 rounded-full bg-primary/40 flex items-center justify-center text-on-primary shrink-0 animate-spin">
+                <span class="material-symbols-outlined text-[18px]">sync</span>
+              </div>
+              <div class="bg-surface-container-lowest dark:bg-[#0f172a] px-4 py-3 rounded-2xl shadow-sm text-[13px] text-on-surface-variant dark:text-slate-300 dark:border dark:border-slate-800 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+                <span>Optimizing prompt context, running Guard Mode &amp; routing...</span>
+              </div>
+            </div>
+
+            <!-- SUGGESTED PROMPT CHIPS -->
+            <div class="w-full pt-1">
+              <div class="flex items-center justify-between pb-1.5">
+                <span class="text-[11px] text-on-surface-variant dark:text-slate-400 font-medium flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px] text-primary">auto_fix_high</span>
+                  Cost-Optimized Prompt Actions
+                </span>
+                <span class="font-code text-[11px] text-secondary font-medium">~70% cheaper than open chat</span>
+              </div>
+              <div class="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none">
+                <button class="prompt-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-lowest dark:bg-slate-800 hover:bg-surface-container-high dark:hover:bg-slate-700 text-on-surface dark:text-slate-200 text-[12px] shadow-sm transition-colors flex items-center gap-1.5 shrink-0" data-chip="Explain binary search invariants in 3 short bullet points.">
+                  <span>✨</span><span>Explain simply</span>
+                </button>
+                <button class="prompt-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-lowest dark:bg-slate-800 hover:bg-surface-container-high dark:hover:bg-slate-700 text-on-surface dark:text-slate-200 text-[12px] shadow-sm transition-colors flex items-center gap-1.5 shrink-0" data-chip="Give me 1 hint only without giving away the full answer to solve two-sum.">
+                  <span>💡</span><span>Give hint only</span>
+                </button>
+                <button class="prompt-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-lowest dark:bg-slate-800 hover:bg-surface-container-high dark:hover:bg-slate-700 text-on-surface dark:text-slate-200 text-[12px] shadow-sm transition-colors flex items-center gap-1.5 shrink-0" data-chip="Quiz me with 1 tricky edge-case question on binary search mid-point calculation.">
+                  <span>🎯</span><span>Quiz me</span>
+                </button>
+                <button class="prompt-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-lowest dark:bg-slate-800 hover:bg-surface-container-high dark:hover:bg-slate-700 text-on-surface dark:text-slate-200 text-[12px] shadow-sm transition-colors flex items-center gap-1.5 shrink-0" data-chip="Can you summarize dynamic programming grid problems into 3 flashcards?">
+                  <span>🃏</span><span>Make flashcards</span>
+                </button>
+                <button class="prompt-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-lowest dark:bg-slate-800 hover:bg-surface-container-high dark:hover:bg-slate-700 text-on-surface dark:text-slate-200 text-[12px] shadow-sm transition-colors flex items-center gap-1.5 shrink-0" data-chip="Here is my test log:\n[2026-06-13] INFO compiling task_0\n[2026-06-13] INFO compiling task_1\n[2026-06-13] INFO compiling task_2\n[2026-06-13] INFO compiling task_3\nERROR src/main.py:42: ValueError: invalid literal for int() 'abc'">
+                  <span>🪵</span><span>Test Log Folding</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- CHAT INPUT COMPOSER -->
+            <div class="bg-surface-container-lowest dark:bg-[#0f172a] rounded-2xl p-3 shadow-md flex flex-col gap-2.5 dark:border dark:border-slate-800">
+              <div class="relative w-full">
+                <textarea id="prompt-input" class="w-full bg-transparent resize-none outline-none text-[14px] text-on-surface dark:text-slate-100 placeholder:text-outline p-1" placeholder="Ask a question, paste code, or paste compiler error logs..." rows="3"></textarea>
+              </div>
+              <div class="flex flex-wrap items-center justify-between gap-2 pt-2 bg-surface-container-low/50 dark:bg-slate-800/60 p-2 rounded-xl">
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-secondary-fixed/50 text-on-secondary-fixed text-[11px] font-medium">
+                    <span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+                    <span>Guard Mode: Active</span>
+                  </div>
+                  <label class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-surface-container-lowest dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 text-[11px] shadow-sm cursor-pointer hover:bg-surface-container">
+                    <input type="checkbox" id="hint-mode-checkbox" class="accent-primary mr-1"/>
+                    <span class="material-symbols-outlined text-[16px] text-tertiary">lightbulb</span>
+                    <span>Hint First (120 tok cap)</span>
+                  </label>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button id="send-prompt-btn" class="bg-primary hover:bg-primary-container text-on-primary px-4 py-2 rounded-xl text-[13px] font-medium shadow-sm transition-all flex items-center gap-1.5 active:scale-[0.98]">
+                    <span>Send</span>
+                    <span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- AUDIT & TOKENSHIELD RECEIPT DRAWER (RIGHT) -->
+          <aside class="xl:col-span-5 flex flex-col gap-4" id="audit-drawer">
+            <div class="bg-surface-container-lowest dark:bg-[#0f172a] rounded-2xl p-4 shadow-sm flex flex-col gap-4 dark:border dark:border-slate-800">
+              <!-- Drawer Header with Interactive Tabs -->
+              <div class="flex flex-col gap-2.5 pb-2 border-b border-outline-variant/30">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary shadow-sm">
+                      <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+                    </div>
+                    <div class="flex flex-col">
+                      <div class="flex items-center gap-2">
+                        <span class="font-headline font-semibold text-[16px] text-on-surface dark:text-white">TokenShield Audit</span>
+                        <span id="receipt-badge" class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-code text-[11px] font-semibold">Live</span>
+                      </div>
+                      <span id="receipt-meta" class="font-code text-[11px] text-outline">Awaiting first prompt...</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Drawer Navigation Tabs -->
+                <div class="flex items-center gap-1 bg-surface-container-low dark:bg-slate-800 p-1 rounded-xl text-[12px]">
+                  <button id="tab-btn-receipt" class="tab-btn flex-1 py-1.5 rounded-lg font-semibold bg-surface-container-lowest dark:bg-slate-700 text-primary dark:text-white shadow-xs text-center transition-all">
+                    1. Receipt
+                  </button>
+                  <button id="tab-btn-coach" class="tab-btn flex-1 py-1.5 rounded-lg text-on-surface-variant dark:text-slate-400 hover:text-on-surface text-center transition-all">
+                    2. Savings Coach
+                  </button>
+                  <button id="tab-btn-raw" class="tab-btn flex-1 py-1.5 rounded-lg text-on-surface-variant dark:text-slate-400 hover:text-on-surface text-center transition-all">
+                    3. Raw JSON
+                  </button>
+                </div>
+              </div>
+
+              <!-- TAB PANE 1: TOKEN BREAKDOWN -->
+              <div id="tab-pane-receipt" class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] uppercase tracking-wider text-on-surface-variant dark:text-slate-400 font-semibold">Token Savings Breakdown</span>
+                  <span id="receipt-cost-spared" class="font-code text-[11px] text-secondary font-medium">0 tokens spared</span>
+                </div>
+                <div class="bg-surface-container-low dark:bg-slate-800/80 rounded-xl p-3 space-y-1.5 text-[12px]">
+                  <div class="flex items-center justify-between">
+                    <span class="text-on-surface-variant dark:text-slate-400">Raw Client Input:</span>
+                    <span id="receipt-raw-in" class="font-code text-outline">0 tokens</span>
+                  </div>
+                  <div class="flex items-center justify-between font-semibold">
+                    <span class="text-on-surface dark:text-slate-200">Optimized Payload:</span>
+                    <span id="receipt-opt-in" class="font-code text-primary">0 tokens</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-on-surface-variant dark:text-slate-400">Upstream Processed:</span>
+                    <span id="receipt-upstream-in" class="font-code text-on-surface dark:text-slate-200">0 tokens</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-on-surface-variant dark:text-slate-400">Output Tokens:</span>
+                    <span id="receipt-output-tok" class="font-code text-on-surface dark:text-slate-200">0 tokens</span>
+                  </div>
+                  <div class="pt-1 flex items-center justify-between font-semibold text-secondary">
+                    <span class="flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[16px]">savings</span>
+                      Total Input Tokens Spared:
+                    </span>
+                    <span id="receipt-net-spared" class="font-code font-bold text-[14px]">0 tokens</span>
+                  </div>
+                </div>
+
+                <!-- Noise Reduction & Guard Summary -->
+                <div class="grid grid-cols-2 gap-2 text-[12px]">
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2 rounded-xl flex flex-col">
+                    <span class="text-outline text-[10px]">Secrets Filtered</span>
+                    <span id="receipt-secrets" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                  </div>
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2 rounded-xl flex flex-col">
+                    <span class="text-outline text-[10px]">PII Sanitized</span>
+                    <span id="receipt-pii" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                  </div>
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2 rounded-xl flex flex-col">
+                    <span class="text-outline text-[10px]">Log Lines Folded</span>
+                    <span id="receipt-logs-folded" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                  </div>
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2 rounded-xl flex flex-col">
+                    <span class="text-outline text-[10px]">JSON Blocks Minified</span>
+                    <span id="receipt-json-compact" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB PANE 2: SAVINGS COACH RECOMMENDATIONS -->
+              <div id="tab-pane-coach" class="hidden space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] uppercase tracking-wider text-on-surface-variant dark:text-slate-400 font-semibold">Savings Coach Insights</span>
+                  <span class="font-code text-[11px] text-primary font-medium">Educational Guidance</span>
+                </div>
+                <div id="coach-recommendations-list" class="space-y-1.5">
+                  <div class="p-2.5 rounded-lg bg-surface-container-low dark:bg-slate-800 text-[12px] text-on-surface-variant dark:text-slate-400 italic">
+                    Submit a question to see personalized prompt tips from the Savings Coach.
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB PANE 3: RAW JSON RECEIPT -->
+              <div id="tab-pane-raw" class="hidden space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] uppercase tracking-wider text-on-surface-variant dark:text-slate-400 font-semibold">Raw TokenShield Receipt</span>
+                  <button id="copy-receipt-btn" class="text-[11px] text-primary hover:underline font-medium">Copy JSON</button>
+                </div>
+                <pre id="raw-json-receipt" class="p-2.5 rounded-xl bg-surface-container-low dark:bg-slate-900 font-code text-[11px] text-on-surface dark:text-slate-300 max-h-60 overflow-y-auto whitespace-pre-wrap">{ "status": "Waiting for request" }</pre>
+              </div>
+
+              <!-- SECTION 4: REVISION & QUIZ CARD -->
+              <div class="p-3.5 rounded-xl bg-surface-container-low dark:bg-slate-800/80 space-y-3" id="session-wrapup-card">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+                    <span class="text-[13px] font-semibold text-on-surface dark:text-white">Session Wrap-up Ready</span>
+                  </div>
+                  <span id="wrapup-topic-tag" class="px-2 py-0.5 rounded-full bg-surface-container-highest dark:bg-slate-700 text-on-surface dark:text-slate-200 font-code text-[11px]">Topic</span>
+                </div>
+                
+                <div id="wrapup-content" class="space-y-2 text-[12px]">
+                  <p class="text-on-surface-variant dark:text-slate-400">
+                    Click <strong>Finish Session</strong> to aggregate your weak points, extract high-yield flashcards, and run an active-recall mini quiz.
+                  </p>
+                </div>
+
+                <div id="flashcards-container" class="hidden space-y-2"></div>
+                <div id="quiz-container" class="hidden space-y-2"></div>
+
+                <button id="run-finish-btn" class="w-full py-2.5 px-3 bg-secondary hover:bg-secondary/90 text-on-secondary rounded-xl text-[13px] font-semibold transition-all shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98]">
+                  <span class="material-symbols-outlined text-[18px]">quiz</span>
+                  <span>Generate Revision Package</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- JAVASCRIPT: FULL REAL BACKEND INTEGRATION -->
+  <script>
+    (function() {
+      // Dynamic API base supports both direct port 8000 and port 3000 standalone serving
+      const API_BASE = window.location.port === '8000' ? '' : 'http://127.0.0.1:8000';
+      const sessionId = 'session-' + Math.random().toString(36).substring(2, 9);
+      let sessionTopics = new Set();
+      let lastReceiptData = null;
+
+      // Dark mode state
+      const darkToggle = document.getElementById('dark-mode-toggle');
+      const themeIcon = document.getElementById('theme-icon');
+      darkToggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+        const isDark = document.documentElement.classList.contains('dark');
+        themeIcon.textContent = isDark ? 'light_mode' : 'dark_mode';
+      });
+
+      // Drawer Tabs Wiring
+      const tabBtnReceipt = document.getElementById('tab-btn-receipt');
+      const tabBtnCoach = document.getElementById('tab-btn-coach');
+      const tabBtnRaw = document.getElementById('tab-btn-raw');
+      const paneReceipt = document.getElementById('tab-pane-receipt');
+      const paneCoach = document.getElementById('tab-pane-coach');
+      const paneRaw = document.getElementById('tab-pane-raw');
+
+      function switchTab(activeBtn, activePane) {
+        [tabBtnReceipt, tabBtnCoach, tabBtnRaw].forEach(btn => {
+          btn.className = 'tab-btn flex-1 py-1.5 rounded-lg text-on-surface-variant dark:text-slate-400 hover:text-on-surface text-center transition-all';
+        });
+        activeBtn.className = 'tab-btn flex-1 py-1.5 rounded-lg font-semibold bg-surface-container-lowest dark:bg-slate-700 text-primary dark:text-white shadow-xs text-center transition-all';
+
+        [paneReceipt, paneCoach, paneRaw].forEach(p => p.classList.add('hidden'));
+        activePane.classList.remove('hidden');
+      }
+
+      tabBtnReceipt.addEventListener('click', () => switchTab(tabBtnReceipt, paneReceipt));
+      tabBtnCoach.addEventListener('click', () => switchTab(tabBtnCoach, paneCoach));
+      tabBtnRaw.addEventListener('click', () => switchTab(tabBtnRaw, paneRaw));
+
+      // DOM Elements
+      const promptInput = document.getElementById('prompt-input');
+      const sendBtn = document.getElementById('send-prompt-btn');
+      const chatStream = document.getElementById('chat-stream');
+      const chatLoading = document.getElementById('chat-loading');
+      const hintModeCheckbox = document.getElementById('hint-mode-checkbox');
+
+      // 1. Fetch live metrics on load & update header/widgets
+      async function loadLiveMetrics() {
+        try {
+          const res = await fetch(`${API_BASE}/metrics/live`);
+          if (!res.ok) return;
+          const data = await res.json();
+          
+          document.getElementById('metric-tokens-saved').textContent = (data.saved_tokens || 0).toLocaleString();
+          document.getElementById('sidebar-tokens-saved').textContent = (data.saved_tokens || 0).toLocaleString() + ' tok';
+          
+          const hitRate = ((data.cache_hit_rate || 0) * 100).toFixed(1);
+          document.getElementById('metric-cache-rate').textContent = hitRate + '%';
+          document.getElementById('sidebar-cache-rate').textContent = hitRate + '% Cache';
+
+          const redactions = (data.total_redactions || 0);
+          document.getElementById('metric-redactions').textContent = redactions + ' Secrets';
+          document.getElementById('sidebar-redactions').textContent = redactions.toString();
+
+          if (data.forecast) {
+            const left = data.forecast.estimated_questions_left || 0;
+            document.getElementById('metric-runway').textContent = `~${left} Qs left`;
+            document.getElementById('quota-detail').textContent = `${(data.forecast.used_tokens || 0).toLocaleString()} / ${(data.forecast.daily_token_quota || 50000).toLocaleString()} tokens`;
+            
+            const usedPct = Math.min(100, Math.round((data.forecast.used_tokens / (data.forecast.daily_token_quota || 50000)) * 100));
+            document.getElementById('top-budget-bar-used').style.width = usedPct + '%';
+            document.getElementById('bar-upstream').style.width = usedPct + '%';
+          }
+        } catch (e) {
+          console.error('Failed to load metrics:', e);
+        }
+      }
+
+      // 2. Fetch waterfall status
+      async function loadProviderStatus() {
+        try {
+          const res = await fetch(`${API_BASE}/providers/status`);
+          if (!res.ok) return;
+          const providers = await res.json();
+          const configured = providers.filter(p => p.configured);
+          if (configured.length > 0) {
+            document.getElementById('active-provider-name').textContent = configured[0].name.toUpperCase() + ' (Active)';
+            const fallbacks = configured.slice(1).map(p => p.name).join(' · ');
+            document.getElementById('fallback-provider-list').textContent = fallbacks ? `${fallbacks} Fallback` : 'No fallbacks';
+          }
+        } catch (e) {
+          console.error('Failed to load providers:', e);
+        }
+      }
+
+      // 3. Populate Drawer from Receipt
+      function displayReceipt(receipt) {
+        if (!receipt) return;
+        lastReceiptData = receipt;
+        document.getElementById('raw-json-receipt').textContent = JSON.stringify(receipt, null, 2);
+
+        document.getElementById('receipt-badge').textContent = receipt.cache || 'MISS';
+        if (receipt.cache === 'EXACT_HIT' || receipt.cache === 'HIT') {
+          document.getElementById('receipt-badge').className = 'px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-code text-[11px] font-semibold animate-pulse';
+        } else {
+          document.getElementById('receipt-badge').className = 'px-2 py-0.5 rounded-full bg-surface-container-high dark:bg-slate-700 text-primary dark:text-primary-fixed font-code text-[11px] font-semibold';
+        }
+
+        document.getElementById('receipt-meta').textContent = `Req #${(receipt.request_id || '').substring(0, 8)} · ${receipt.provider || 'cache'}`;
+        document.getElementById('receipt-raw-in').textContent = (receipt.raw_input_tokens || 0) + ' tokens';
+        document.getElementById('receipt-opt-in').textContent = (receipt.optimized_input_tokens || 0) + ' tokens';
+        document.getElementById('receipt-upstream-in').textContent = (receipt.upstream_input_tokens || 0) + ' tokens';
+        document.getElementById('receipt-output-tok').textContent = (receipt.output_tokens || 0) + ' tokens';
+        document.getElementById('receipt-net-spared').textContent = (receipt.saved_input_tokens || 0) + ' tokens';
+        document.getElementById('receipt-cost-spared').textContent = `${(receipt.saved_input_tokens || 0)} tokens spared`;
+
+        document.getElementById('receipt-secrets').textContent = (receipt.secrets_redacted || 0).toString();
+        document.getElementById('receipt-pii').textContent = (receipt.pii_redacted || 0).toString();
+        document.getElementById('receipt-logs-folded').textContent = (receipt.logs_folded || 0).toString();
+        document.getElementById('receipt-json-compact').textContent = (receipt.json_compressed || 0).toString();
+
+        if (receipt.study && receipt.study.topic) {
+          document.getElementById('header-topic').textContent = receipt.study.topic;
+          document.getElementById('wrapup-topic-tag').textContent = receipt.study.topic;
+          sessionTopics.add(receipt.study.topic);
+          updateTopicsSidebar();
+        }
+
+        // Render Recommendations
+        const recList = document.getElementById('coach-recommendations-list');
+        recList.innerHTML = '';
+        if (receipt.recommendations && receipt.recommendations.length > 0) {
+          receipt.recommendations.forEach(r => {
+            const card = document.createElement('div');
+            card.className = 'p-2.5 rounded-xl bg-surface-container-low dark:bg-slate-800 text-[12px] flex flex-col gap-1 border border-outline-variant/30';
+            card.innerHTML = `
+              <div class="flex items-center justify-between font-semibold text-on-surface dark:text-white">
+                <span class="flex items-center gap-1 text-primary dark:text-primary-fixed">
+                  <span class="material-symbols-outlined text-[14px]">tips_and_updates</span>
+                  ${r.title}
+                </span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-container dark:bg-slate-700 font-code">${r.type}</span>
+              </div>
+              <p class="text-on-surface-variant dark:text-slate-300 text-[11px]">${r.message}</p>
+            `;
+            recList.appendChild(card);
+          });
+        } else {
+          recList.innerHTML = '<div class="p-2.5 rounded-lg bg-surface-container-low dark:bg-slate-800 text-[12px] text-on-surface-variant dark:text-slate-400">Prompt was already optimal! No extra waste detected.</div>';
+        }
+      }
+
+      function updateTopicsSidebar() {
+        const container = document.getElementById('topics-list');
+        if (sessionTopics.size === 0) return;
+        container.innerHTML = '';
+        sessionTopics.forEach(topic => {
+          const item = document.createElement('div');
+          item.className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-low dark:bg-slate-800 text-on-surface dark:text-slate-200 font-medium text-[12px] truncate';
+          item.innerHTML = `<span class="material-symbols-outlined text-[14px] text-primary">bookmark</span><span class="truncate">${topic}</span>`;
+          container.appendChild(item);
+        });
+      }
+
+      // Copy raw JSON
+      document.getElementById('copy-receipt-btn').addEventListener('click', () => {
+        if (lastReceiptData) {
+          navigator.clipboard.writeText(JSON.stringify(lastReceiptData, null, 2));
+          alert('Receipt JSON copied to clipboard!');
+        }
+      });
+
+      // 4. Send Chat Completion
+      async function sendPrompt() {
+        const text = promptInput.value.trim();
+        if (!text) return;
+        promptInput.value = '';
+
+        // Add user message bubble (with live tooltip on mock redaction if detected)
+        const userDiv = document.createElement('div');
+        userDiv.className = 'flex gap-3 items-start justify-end pl-8';
+        userDiv.innerHTML = `
+          <div class="flex flex-col items-end gap-1.5 max-w-xl">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] text-on-surface-variant dark:text-slate-400">You · Just now</span>
+            </div>
+            <div class="bg-primary text-on-primary p-3.5 rounded-2xl rounded-tr-sm shadow-sm">
+              <div class="text-[14px] whitespace-pre-wrap">${formatUserPrompt(text)}</div>
+            </div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-surface-container-high dark:bg-slate-700 flex items-center justify-center text-primary dark:text-primary-fixed font-bold text-[13px] shrink-0 shadow-sm">
+            S
+          </div>
+        `;
+        chatStream.appendChild(userDiv);
+        chatLoading.classList.remove('hidden');
+        userDiv.scrollIntoView({ behavior: 'smooth' });
+
+        const budgetMode = hintModeCheckbox.checked ? 'critical' : 'normal';
+
+        try {
+          const res = await fetch(`${API_BASE}/v1/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-tokenshield-session': sessionId,
+              'x-tokenshield-budget-mode': budgetMode
+            },
+            body: JSON.stringify({
+              messages: [{ role: 'user', content: text }]
+            })
+          });
+
+          chatLoading.classList.add('hidden');
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || 'Proxy request failed');
+          }
+
+          const data = await res.json();
+          const answer = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '';
+          const receipt = data.tokenshield;
+
+          // Add assistant message bubble
+          const isCacheHit = receipt && (receipt.cache === 'EXACT_HIT' || receipt.cache === 'HIT');
+          const assistDiv = document.createElement('div');
+          assistDiv.className = 'flex gap-3 items-start pr-4';
+          assistDiv.innerHTML = `
+            <div class="w-8 h-8 rounded-full ${isCacheHit ? 'bg-secondary' : 'bg-primary'} flex items-center justify-center text-on-primary shrink-0 shadow-sm">
+              <span class="material-symbols-outlined text-[18px]">${isCacheHit ? 'offline_bolt' : 'smart_toy'}</span>
+            </div>
+            <div class="flex flex-col gap-2 max-w-2xl">
+              <div class="flex items-center gap-2">
+                <span class="text-[12px] font-semibold ${isCacheHit ? 'text-secondary' : 'text-on-surface dark:text-white'}">
+                  ${isCacheHit ? 'TokenShield Semantic Cache' : 'TokenShield AI'}
+                </span>
+                <span class="text-[11px] text-on-surface-variant dark:text-slate-400">${isCacheHit ? '0ms Instant Hit' : (receipt ? receipt.provider : '')}</span>
+              </div>
+              <div class="bg-surface-container-lowest dark:bg-[#0f172a] p-4 rounded-2xl rounded-tl-sm shadow-sm dark:border dark:border-slate-800 space-y-3">
+                <div class="text-[14px] text-on-surface dark:text-slate-200 leading-relaxed whitespace-pre-wrap">${formatMarkdown(answer)}</div>
+                
+                <div class="pt-1">
+                  <div class="inline-flex flex-wrap items-center gap-2 ${isCacheHit ? 'bg-secondary-fixed/40' : 'bg-surface-container-low dark:bg-slate-800'} px-3 py-1.5 rounded-xl text-[11px]">
+                    <span class="flex items-center gap-1 font-semibold ${isCacheHit ? 'text-secondary' : 'text-primary dark:text-primary-fixed'}">
+                      <span class="material-symbols-outlined text-[14px]">shield</span>
+                      ${receipt ? `Saved ${receipt.saved_input_tokens} input tok` : ''}
+                    </span>
+                    <span class="text-outline-variant">•</span>
+                    <span class="font-code">${receipt ? receipt.cache : 'OK'}</span>
+                    ${receipt && receipt.logs_folded > 0 ? `<span class="text-outline-variant">•</span><span>${receipt.logs_folded} logs folded</span>` : ''}
+                    ${receipt && receipt.json_compressed > 0 ? `<span class="text-outline-variant">•</span><span>${receipt.json_compressed} json minified</span>` : ''}
+                    <button class="inspect-btn ml-1 font-semibold text-primary dark:text-primary-fixed hover:underline">Inspect Receipt →</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+          chatStream.appendChild(assistDiv);
+          assistDiv.scrollIntoView({ behavior: 'smooth' });
+
+          // Update Receipt Drawer
+          displayReceipt(receipt);
+          loadLiveMetrics();
+
+          // Wire inspect button
+          assistDiv.querySelector('.inspect-btn').addEventListener('click', () => {
+            const drawer = document.getElementById('audit-drawer');
+            drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            switchTab(tabBtnReceipt, paneReceipt);
+          });
+
+        } catch (err) {
+          chatLoading.classList.add('hidden');
+          const errDiv = document.createElement('div');
+          errDiv.className = 'p-3 bg-error-container text-on-error-container rounded-xl text-[13px]';
+          errDiv.textContent = 'Error: ' + err.message;
+          chatStream.appendChild(errDiv);
+        }
+      }
+
+      // 5. Finish Session & Generate Study Package
+      async function finishSession() {
+        const wrapupContent = document.getElementById('wrapup-content');
+        const flashcardsContainer = document.getElementById('flashcards-container');
+        const quizContainer = document.getElementById('quiz-container');
+
+        wrapupContent.innerHTML = '<div class="flex items-center gap-2 text-primary dark:text-primary-fixed"><span class="material-symbols-outlined animate-spin text-[16px]">sync</span><span>Analyzing session topics & generating flashcards...</span></div>';
+
+        try {
+          const res = await fetch(`${API_BASE}/session/${sessionId}/finish`, { method: 'POST' });
+          if (!res.ok) {
+            wrapupContent.innerHTML = '<p class="text-outline italic">No activity recorded in this session yet. Ask a question first!</p>';
+            return;
+          }
+          const pkg = await res.json();
+
+          const reqCount = (pkg.telemetry && pkg.telemetry.requests_count) !== undefined ? pkg.telemetry.requests_count : (pkg.total_requests || 0);
+          const tokSaved = (pkg.telemetry && pkg.telemetry.tokens_saved) !== undefined ? pkg.telemetry.tokens_saved : (pkg.total_saved_tokens || 0);
+          const secRedacted = (pkg.telemetry && pkg.telemetry.secrets_redacted) !== undefined ? pkg.telemetry.secrets_redacted : (pkg.secrets_protected || 0);
+          const weakTopics = (pkg.weak_topics && pkg.weak_topics.length > 0) ? pkg.weak_topics : (pkg.struggling_topics || []);
+
+          wrapupContent.innerHTML = `
+            <div class="p-2.5 rounded-lg bg-surface-container-lowest dark:bg-slate-900 space-y-1">
+              <div class="font-semibold text-on-surface dark:text-white">Telemetry Summary:</div>
+              <div class="font-code text-[11px] text-on-surface-variant dark:text-slate-400">
+                Requests: ${reqCount} · Saved: ${tokSaved.toLocaleString()} tok · Redactions: ${secRedacted}
+              </div>
+            </div>
+            ${weakTopics.length > 0 ? `
+              <div class="p-2.5 rounded-lg bg-error-container/40 text-on-surface dark:text-slate-200 space-y-1">
+                <div class="font-semibold text-error flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">flag</span> Weak Topics Identified:
+                </div>
+                <div>${weakTopics.join(', ')}</div>
+              </div>
+            ` : ''}
+          `;
+
+          // Render flashcards
+          if (pkg.flashcards && pkg.flashcards.length > 0) {
+            flashcardsContainer.classList.remove('hidden');
+            flashcardsContainer.innerHTML = '<div class="font-semibold text-on-surface dark:text-white text-[12px] pt-1">Revision Flashcards (Click to flip):</div>';
+            pkg.flashcards.forEach((card, idx) => {
+              const fc = document.createElement('div');
+              fc.className = 'flashcard cursor-pointer bg-surface-container-lowest dark:bg-slate-900 p-3 rounded-xl shadow-sm border border-outline-variant/40 hover:border-primary transition-all';
+              fc.innerHTML = `
+                <div class="text-[11px] font-semibold text-primary dark:text-primary-fixed">Card #${idx+1}: ${card.topic}</div>
+                <div class="text-[12px] font-medium text-on-surface dark:text-slate-200 mt-1 card-q">Q: ${card.question}</div>
+                <div class="text-[12px] text-secondary mt-1.5 pt-1.5 border-t border-outline-variant/30 hidden card-a">A: ${card.answer}</div>
+              `;
+              fc.addEventListener('click', () => {
+                const ans = fc.querySelector('.card-a');
+                ans.classList.toggle('hidden');
+              });
+              flashcardsContainer.appendChild(fc);
+            });
+          }
+
+          // Render quiz
+          if (pkg.mini_quiz && pkg.mini_quiz.length > 0) {
+            quizContainer.classList.remove('hidden');
+            quizContainer.innerHTML = '<div class="font-semibold text-on-surface dark:text-white text-[12px] pt-1">Active Recall Quiz:</div>';
+            pkg.mini_quiz.forEach((q, idx) => {
+              const qBox = document.createElement('div');
+              qBox.className = 'p-3 rounded-xl bg-surface-container-lowest dark:bg-slate-900 border border-outline-variant/40 space-y-2';
+              qBox.innerHTML = `
+                <div class="font-medium text-[12px] text-on-surface dark:text-slate-200">Q${idx+1}: ${q.question}</div>
+                <button class="reveal-btn text-[11px] px-2 py-1 bg-surface-container dark:bg-slate-700 text-primary dark:text-primary-fixed rounded-md font-semibold hover:bg-surface-container-high">Reveal Answer</button>
+                <div class="q-ans hidden text-[12px] text-secondary font-medium pt-1 border-t border-outline-variant/30">${q.answer || q.expected_answer || ''}</div>
+              `;
+              qBox.querySelector('.reveal-btn').addEventListener('click', (e) => {
+                qBox.querySelector('.q-ans').classList.toggle('hidden');
+                e.target.textContent = qBox.querySelector('.q-ans').classList.contains('hidden') ? 'Reveal Answer' : 'Hide Answer';
+              });
+              quizContainer.appendChild(qBox);
+            });
+          }
+
+          document.getElementById('session-wrapup-card').scrollIntoView({ behavior: 'smooth' });
+
+        } catch (e) {
+          wrapupContent.innerHTML = `<p class="text-error">Failed: ${e.message}</p>`;
+        }
+      }
+
+      function escapeHtml(text) {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      function formatUserPrompt(text) {
+        let safe = escapeHtml(text);
+        // Add interactive tooltip if API keys or emails are found
+        safe = safe.replace(/(sk-[a-zA-Z0-9_\-]{8,})/g, '<span class="group relative inline-block bg-error/30 text-white px-1.5 py-0.5 rounded text-xs line-through cursor-help">$1<span class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block w-48 bg-gray-900 text-white text-[10px] p-1.5 rounded shadow-lg z-50 text-center font-normal not-italic">🛡️ Guard Mode: Filtered before transmission</span></span>');
+        safe = safe.replace(/([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)/g, '<span class="group relative inline-block bg-error/30 text-white px-1.5 py-0.5 rounded text-xs line-through cursor-help">$1<span class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block w-48 bg-gray-900 text-white text-[10px] p-1.5 rounded shadow-lg z-50 text-center font-normal not-italic">🛡️ Guard Mode: Redacted before transmission</span></span>');
+        return safe;
+      }
+
+      function formatMarkdown(text) {
+        if (!text) return '';
+        return escapeHtml(text)
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/`([^`]+)`/g, '<code class="bg-surface-container dark:bg-slate-800 px-1 py-0.5 rounded font-code text-[12px]">$1</code>');
+      }
+
+      // Event Listeners
+      sendBtn.addEventListener('click', sendPrompt);
+      promptInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendPrompt();
+        }
+      });
+
+      document.querySelectorAll('.prompt-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          promptInput.value = chip.getAttribute('data-chip');
+          promptInput.focus();
+        });
+      });
+
+      document.getElementById('finish-session-btn').addEventListener('click', finishSession);
+      document.getElementById('run-finish-btn').addEventListener('click', finishSession);
+      document.getElementById('refresh-metrics-btn').addEventListener('click', () => {
+        loadLiveMetrics();
+        loadProviderStatus();
+      });
+
+      document.getElementById('new-session-btn').addEventListener('click', () => {
+        window.location.reload();
+      });
+
+      // Init
+      loadLiveMetrics();
+      loadProviderStatus();
+    })();
+  </script>
+</body>
+</html>

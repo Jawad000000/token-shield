@@ -5,8 +5,7 @@ import os
 BUDGET_DIRECTIVES = {
     "saving": (
         "[Answer Budget: SAVING]\n"
-        "Provide a high-yield, well-structured, and elegant explanation. Use clear Markdown headings and bullet points. "
-        "Include crisp code snippets when appropriate. Avoid preamble, conversational filler, and restating the prompt."
+        "Lead with the direct answer in the first sentence. Crisp code if relevant. Zero preamble, zero filler."
     ),
     "critical": (
         "[Answer Budget: CRITICAL]\n"
@@ -17,11 +16,11 @@ BUDGET_DIRECTIVES = {
 
 
 def resolve_budget_mode(requested_mode: str | None = None, raw_tokens: int = 0) -> str:
-    default_mode = os.getenv("TOKENSHIELD_DEFAULT_BUDGET_MODE", "saving").lower()
+    default_mode = os.getenv("TOKENSHIELD_DEFAULT_BUDGET_MODE", "normal").lower()
     mode = (requested_mode or default_mode).lower().strip()
 
     if mode not in {"normal", "saving", "critical"}:
-        mode = "saving"
+        mode = "normal"
 
     # Auto-escalation based on token load
     if raw_tokens >= 4000:

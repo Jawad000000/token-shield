@@ -34,8 +34,12 @@ def _clean_text(text: str) -> str:
 
 def _summarize_turn(role: str, text: str) -> str:
     cleaned = _clean_text(text)
-    # Keep up to 60 chars for compact summary
-    truncated = cleaned[:60] + ("..." if len(cleaned) > 60 else "")
+    max_len = 90
+    if len(cleaned) > max_len:
+        truncated = cleaned[:max_len].rsplit(" ", 1)[0] + "..."
+    else:
+        truncated = cleaned
+
     if role == "user":
         return f"User: {truncated}"
     if role == "assistant":

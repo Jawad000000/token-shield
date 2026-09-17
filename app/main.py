@@ -3,8 +3,11 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from pathlib import Path
+
 from fastapi import FastAPI, Header, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, ConfigDict
 
 from app.budgeter import (
@@ -119,6 +122,17 @@ def set_tokenshield_headers(response: Response, receipt: dict[str, Any]) -> None
             response.headers["x-tokenshield-topic"] = str(study_info["topic"])
         if study_info.get("struggling"):
             response.headers["x-tokenshield-struggling-topic"] = str(study_info["topic"])
+
+
+UI_FILE_PATH = Path(__file__).resolve().parent.parent / "ui.html"
+
+
+@app.get("/", response_class=HTMLResponse)
+@app.get("/ui", response_class=HTMLResponse)
+def serve_ui() -> Response:
+    if UI_FILE_PATH.is_file():
+        return FileResponse(str(UI_FILE_PATH), media_type="text/html")
+    return HTMLResponse("<h1>TokenShield UI not found</h1>", status_code=404)
 
 
 @app.get("/health")
@@ -350,9 +364,9 @@ async def chat_completions(
         # CRITICAL: Always pass sanitized, optimized messages upstream
         payload["messages"] = optimized_messages
         if "max_tokens" in payload and payload["max_tokens"] is not None:
-            payload["max_tokens"] = min(int(payload["max_tokens"]), output_cap)
-        else:
-            payload["max_tokens"] = output_cap
+            payload["max_tokens"] = int(payload["max_tokens"])
+        elif shrink_result.budget_mode == "critical":
+            payload["max_tokens"] = 120
         upstream_result = await providers.chat_completion(payload)
         upstream_response, provider, used_failover = upstream_result[:3]
     except ProviderError as error:
@@ -366,7 +380,17 @@ async def chat_completions(
         provider_attempts = [{"provider": provider.name, "status": 200}]
 
     answer = assistant_text(upstream_response)
-    output_tokens = estimate_text_tokens(answer)
+    usage_data = upstream_response.get("usage") if isinstance(upstream_response, dict) else None
+    if usage_data and isinstance(usage_data, dict) and usage_data.get("completion_tokens"):
+        output_tokens = int(usage_data["completion_tokens"])
+    else:
+        output_tokens = estimate_text_tokens(answer)
+
+    if usage_data and isinstance(usage_data, dict) and usage_data.get("prompt_tokens"):
+        actual_upstream_input = int(usage_data["prompt_tokens"])
+    else:
+        actual_upstream_input = optimized_input_tokens
+
     saved_output_tokens = estimate_output_tokens_saved(shrink_result.budget_mode, output_tokens)
     strategies = base_strategies + ["provider_proxy"]
     if used_failover:
@@ -380,8 +404,8 @@ async def chat_completions(
         "failover": used_failover,
         "raw_input_tokens": raw_input_tokens,
         "optimized_input_tokens": optimized_input_tokens,
-        "upstream_input_tokens": optimized_input_tokens,
-        "saved_input_tokens": saved_input_tokens,
+        "upstream_input_tokens": actual_upstream_input,
+        "saved_input_tokens": max(0, raw_input_tokens - actual_upstream_input),
         "output_tokens": output_tokens,
         "max_output_tokens": output_cap,
         "estimated_output_tokens_saved": saved_output_tokens,
