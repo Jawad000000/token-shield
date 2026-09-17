@@ -90,8 +90,19 @@ class ProviderRouter:
             "X-Title": "TokenShield",
         }
         client = self._get_client()
-        response = await client.post(url, headers=headers, json=payload)
+        try:
+            response = await client.post(url, headers=headers, json=payload, timeout=45.0)
+        except httpx.TimeoutException as exc:
+            raise ProviderError(provider.name, 504, f"Request timed out after 45s: {exc}") from exc
+        except httpx.NetworkError as exc:
+            raise ProviderError(provider.name, 502, f"Network connection failed: {exc}") from exc
+        except Exception as exc:
+            raise ProviderError(provider.name, 500, f"Unexpected request failure: {exc}") from exc
 
         if response.status_code >= 400:
             raise ProviderError(provider.name, response.status_code, response.text[:500])
-        return response.json()
+
+        try:
+            return response.json()
+        except Exception as exc:
+            raise ProviderError(provider.name, 502, f"Invalid JSON response from provider: {exc}") from exc

@@ -743,8 +743,17 @@
 
           chatLoading.classList.add('hidden');
           if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.detail || 'Proxy request failed');
+            let errMsg = `Proxy error (${res.status})`;
+            try {
+              const err = await res.json();
+              errMsg = err.detail || errMsg;
+            } catch {
+              try {
+                const text = await res.text();
+                if (text) errMsg = text.slice(0, 200);
+              } catch {}
+            }
+            throw new Error(errMsg);
           }
 
           const data = await res.json();

@@ -84,16 +84,16 @@ def indexed_provider_configs(max_providers: int = 20) -> tuple[ProviderConfig, .
 def default_provider_configs() -> tuple[ProviderConfig, ...]:
     providers: list[ProviderConfig] = [
         ProviderConfig(
+            name="google",
+            base_url=os.getenv("GOOGLE_OPENAI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai"),
+            api_key_env="GOOGLE_API_KEY",
+            model=os.getenv("GOOGLE_MODEL", "gemini-3.5-flash"),
+        ),
+        ProviderConfig(
             name="vercel",
             base_url=os.getenv("VERCEL_AI_GATEWAY_BASE_URL", "https://ai-gateway.vercel.sh/v1"),
             api_key_env="AI_GATEWAY_API_KEY",
             model=os.getenv("TOKENSHIELD_PRIMARY_MODEL", "openai/gpt-5.5"),
-        ),
-        ProviderConfig(
-            name="google",
-            base_url=os.getenv("GOOGLE_OPENAI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai"),
-            api_key_env="GOOGLE_API_KEY",
-            model=os.getenv("GOOGLE_MODEL", "gemini-3.6-flash"),
         ),
     ]
     if os.getenv("OLLAMA_API_KEY") or os.getenv("OLLAMA_BASE_URL"):
