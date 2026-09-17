@@ -2,5 +2,6 @@
 node_modules/
 .tokenshield/
 .pytest_cache/
+.pytest_temp/
 __pycache__/
 *.pyc

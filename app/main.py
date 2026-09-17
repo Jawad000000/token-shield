@@ -25,6 +25,7 @@ from app.guard import redact_messages
 from app.json_compressor import compress_json_in_messages
 from app.log_folding import fold_logs_in_messages
 from app.memory import deduplicate_session_notes
+from app.normalizer import normalize_messages
 from app.providers import ProviderError, ProviderRouter
 from app.recommendations import build_recommendations
 from app.shrinker import shrink_conversation
@@ -359,9 +360,14 @@ async def chat_completions(
     if json_compressed_count > 0:
         base_strategies.append("json_compression")
 
+    # Step D2: Lossless structural normalization (Markdown tables, delimiter runs, tracking URLs)
+    normalized_messages, norm_mods_count = normalize_messages(json_compressed_messages)
+    if norm_mods_count > 0:
+        base_strategies.append("structural_normalization")
+
     # Step E: Shrink multi-turn conversation and inject answer budget directive
     optimized_messages, shrink_result = shrink_conversation(
-        json_compressed_messages,
+        normalized_messages,
         requested_budget_mode=budget_mode,
         raw_tokens=raw_input_tokens,
     )
