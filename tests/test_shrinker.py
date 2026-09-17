@@ -56,17 +56,31 @@ def test_shrinker_preserves_latest_question_and_compresses_history() -> None:
     shrunk, result = shrink_conversation(history, requested_budget_mode="saving", raw_tokens=raw_tokens)
 
     assert result.applied is True
-    assert result.turns_shrunk == 7
-    assert len(shrunk) == 2  # [compact_system, latest_user]
+    # Only the older turns are summarized; the most recent turns are kept verbatim.
+    assert result.turns_shrunk == 4
+    assert result.turns_kept_verbatim == 2
+    assert len(shrunk) == 4  # [compact_system, recent_user, recent_assistant, latest_user]
 
     # Latest user question must be 100% intact
     assert shrunk[-1]["role"] == "user"
     assert shrunk[-1]["content"] == "What happens if the array is not sorted beforehand?"
 
-    # Tokens must be substantially reduced
+    # The most recent exchange must survive byte-for-byte, not as a truncated summary.
+    assert shrunk[1]["content"] == "Can you give me an example of an iterative implementation?"
+    assert "def binary_search(arr, target):" in shrunk[2]["content"]
+
+    # Stable content (system instructions + budget directive) precedes the growing
+    # summary block so provider prompt-prefix caching can match across turns.
+    system_block = shrunk[0]["content"]
+    assert system_block.index("[System Instructions]") < system_block.index("[Answer Budget")
+    assert system_block.index("[Answer Budget") < system_block.index("[Earlier Conversation Summary]")
+
+    # Tokens must still be reduced. The margin is deliberately smaller than a
+    # summarize-everything strategy: keeping the last exchange verbatim trades some
+    # input compression for answer quality, and output tokens cost more than input.
     shrunk_tokens = estimate_message_tokens(shrunk)
     assert shrunk_tokens < raw_tokens
-    assert (raw_tokens - shrunk_tokens) >= 30
+    assert (raw_tokens - shrunk_tokens) >= 15
 
 
 def test_memory_note_deduplication() -> None:
@@ -155,20 +169,23 @@ def test_route_miss_saves_tokens_via_shrinker(monkeypatch, tmp_path) -> None:
     strategies = headers["x-tokenshield-strategies"]
     assert "conversation_shrinker" in strategies
     assert "budget_saving" in strategies
-    assert int(headers["x-tokenshield-turns-shrunk"]) == 4
+    assert int(headers["x-tokenshield-turns-shrunk"]) == 2
 
-    # Verify upstream payload was shrunk
+    # Verify upstream payload was shrunk but kept the recent exchange intact
     assert len(captured_payloads) == 1
     upstream_msgs = captured_payloads[0]["messages"]
-    assert len(upstream_msgs) == 2  # [compact_summary, latest_user]
+    assert len(upstream_msgs) == 4  # [compact_summary, recent_user, recent_assistant, latest_user]
     assert upstream_msgs[-1]["content"] == unique_query
+    assert upstream_msgs[1]["content"] == "What is an AVL tree?"
+    assert "Adelson-Velsky and Landis" in upstream_msgs[2]["content"]
 
     # Verify receipt
     req_id = headers["x-tokenshield-request-id"]
     receipt = test_db.get_receipt(req_id)
     assert receipt is not None
-    assert receipt["turns_shrunk"] == 4
+    assert receipt["turns_shrunk"] == 2
     assert receipt["budget_mode"] == "saving"
+    # Receipt and metrics DB must report the identical savings figure.
     assert receipt["saved_tokens"] == saved_tokens
 
 

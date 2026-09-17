@@ -299,6 +299,27 @@ class Database:
         data["recommendations"] = build_recommendations(data)
         return data
 
+    def output_baseline(self, minimum_samples: int = 5) -> dict[str, Any]:
+        """
+        Average output length of this deployment's own unconstrained (`normal` mode)
+        responses. Used as the comparison baseline for output-token savings so the
+        number reflects observed behaviour instead of a hardcoded guess.
+
+        Returns the basis so callers can label the figure honestly in the receipt.
+        """
+        row = self._conn.execute(
+            """
+            select count(*) as samples, coalesce(avg(output_tokens), 0) as avg_output
+            from request_logs
+            where budget_mode = 'normal' and cache_hit = 0 and output_tokens > 0
+            """
+        ).fetchone()
+        samples = int(row["samples"] or 0)
+        average = int(round(float(row["avg_output"] or 0)))
+        if samples >= minimum_samples and average > 0:
+            return {"baseline": average, "basis": "measured_avg", "samples": samples}
+        return {"baseline": None, "basis": "default_baseline", "samples": samples}
+
     def metrics(self) -> dict[str, Any]:
         row = self._conn.execute(
             """

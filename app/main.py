@@ -30,6 +30,7 @@ from app.recommendations import build_recommendations
 from app.shrinker import shrink_conversation
 from app.study import assess_struggle, extract_topic, generate_study_package
 from app.tokens import estimate_message_tokens, estimate_text_tokens
+from app.verifier import SoftHitVerifier, VerificationResult
 
 
 class ChatCompletionRequest(BaseModel):
@@ -53,6 +54,10 @@ semantic_cache = SemanticCache(
     soft_threshold=settings.cache_soft_threshold,
 )
 providers = ProviderRouter(settings.providers)
+soft_hit_verifier = SoftHitVerifier(
+    settings.providers,
+    enabled=settings.verify_soft_hits,
+)
 app = FastAPI(title="TokenShield")
 
 app.add_middleware(
@@ -116,6 +121,12 @@ def set_tokenshield_headers(response: Response, receipt: dict[str, Any]) -> None
     response.headers["x-tokenshield-max-output-tokens"] = str(receipt.get("max_output_tokens", 700))
     response.headers["x-tokenshield-saved-output-tokens"] = str(receipt.get("estimated_output_tokens_saved", 0))
     response.headers["x-tokenshield-recommendations-count"] = str(len(receipt.get("recommendations", [])))
+    response.headers["x-tokenshield-upstream-token-source"] = str(receipt.get("upstream_token_source", "estimated"))
+    response.headers["x-tokenshield-output-savings-basis"] = str(receipt.get("output_savings_basis", "default_baseline"))
+    response.headers["x-tokenshield-truncated"] = str(receipt.get("truncated", False)).lower()
+    verification = receipt.get("soft_hit_verification")
+    if isinstance(verification, dict) and verification.get("verdict"):
+        response.headers["x-tokenshield-soft-hit-verdict"] = str(verification["verdict"])
     if "study" in receipt and isinstance(receipt["study"], dict):
         study_info = receipt["study"]
         if study_info.get("topic"):
@@ -227,10 +238,24 @@ async def chat_completions(
     if guard_result.pii_redacted > 0:
         base_strategies.append("pii_redaction")
 
+    # Verify borderline semantic matches before serving them as answers. A SOFT_HIT is
+    # a "close enough" vector match, which is not the same as a correct answer -- so we
+    # spend a few tokens on the cheapest provider to confirm before trusting it.
+    soft_verification: VerificationResult | None = None
+    if cache_hit and cache_hit.hit_type == "SOFT_HIT" and soft_hit_verifier.available:
+        soft_verification = await soft_hit_verifier.verify(cache_query, cache_hit.answer)
+        if soft_verification.rejected:
+            cache_hit = None
+            base_strategies.append("soft_hit_rejected")
+
+    output_baseline = db.output_baseline()
+
     if cache_hit:
         answer_tokens = estimate_text_tokens(cache_hit.answer)
         output_cap = get_budget_output_cap(budget_mode)
-        saved_output_tokens = estimate_output_tokens_saved(budget_mode, answer_tokens)
+        saved_output_tokens = estimate_output_tokens_saved(
+            budget_mode, answer_tokens, baseline=output_baseline["baseline"]
+        )
         if cache_hit.hit_type == "EXACT_HIT":
             cache_label = "EXACT_HIT"
             cache_strategy = "exact_cache"
@@ -267,6 +292,12 @@ async def chat_completions(
             "logs_folded": 0,
             "json_compressed": 0,
             "study": study_receipt,
+            "upstream_token_source": "cache",
+            "output_savings_basis": output_baseline["basis"],
+            "output_baseline_tokens": output_baseline["baseline"] or 700,
+            "max_output_tokens_applied": False,
+            "truncated": False,
+            "soft_hit_verification": soft_verification.as_receipt() if soft_verification else None,
         }
         receipt["recommendations"] = build_recommendations(receipt)
         db.log_request(
@@ -366,7 +397,8 @@ async def chat_completions(
         if "max_tokens" in payload and payload["max_tokens"] is not None:
             payload["max_tokens"] = int(payload["max_tokens"])
         elif shrink_result.budget_mode == "critical":
-            payload["max_tokens"] = 120
+            payload["max_tokens"] = output_cap
+        applied_max_tokens = payload.get("max_tokens")
         upstream_result = await providers.chat_completion(payload)
         upstream_response, provider, used_failover = upstream_result[:3]
     except ProviderError as error:
@@ -388,13 +420,31 @@ async def chat_completions(
 
     if usage_data and isinstance(usage_data, dict) and usage_data.get("prompt_tokens"):
         actual_upstream_input = int(usage_data["prompt_tokens"])
+        upstream_token_source = "provider"
     else:
         actual_upstream_input = optimized_input_tokens
+        upstream_token_source = "estimated"
 
-    saved_output_tokens = estimate_output_tokens_saved(shrink_result.budget_mode, output_tokens)
+    saved_output_tokens = estimate_output_tokens_saved(
+        shrink_result.budget_mode, output_tokens, baseline=output_baseline["baseline"]
+    )
+
+    # A capped answer that stops mid-sentence costs full price and is unusable.
+    # Surface it instead of silently reporting it as a saving.
+    finish_reason = ""
+    try:
+        finish_reason = str(upstream_response["choices"][0].get("finish_reason") or "")
+    except Exception:
+        finish_reason = ""
+    truncated = finish_reason == "length"
+    if truncated:
+        saved_output_tokens = 0
+
     strategies = base_strategies + ["provider_proxy"]
     if used_failover:
         strategies.append("provider_waterfall")
+    if truncated:
+        strategies.append("output_truncated")
 
     receipt = {
         "request_id": request_id,
@@ -404,11 +454,21 @@ async def chat_completions(
         "failover": used_failover,
         "raw_input_tokens": raw_input_tokens,
         "optimized_input_tokens": optimized_input_tokens,
+        # saved_input_tokens compares raw vs optimized using OUR tokenizer on both sides.
+        # upstream_input_tokens is the provider's own count and may use a different
+        # tokenizer entirely, so the two are reported side by side, never subtracted.
         "upstream_input_tokens": actual_upstream_input,
-        "saved_input_tokens": max(0, raw_input_tokens - actual_upstream_input),
+        "upstream_token_source": upstream_token_source,
+        "saved_input_tokens": saved_input_tokens,
         "output_tokens": output_tokens,
-        "max_output_tokens": output_cap,
+        "max_output_tokens": applied_max_tokens if applied_max_tokens else output_cap,
+        "max_output_tokens_applied": applied_max_tokens is not None,
         "estimated_output_tokens_saved": saved_output_tokens,
+        "output_savings_basis": output_baseline["basis"],
+        "output_baseline_tokens": output_baseline["baseline"] or 700,
+        "truncated": truncated,
+        "finish_reason": finish_reason,
+        "soft_hit_verification": soft_verification.as_receipt() if soft_verification else None,
         "strategies": strategies,
         "secrets_redacted": guard_result.secrets_redacted,
         "pii_redacted": guard_result.pii_redacted,
@@ -446,7 +506,7 @@ async def chat_completions(
         cache_hit=False,
         raw_input_tokens=raw_input_tokens,
         optimized_input_tokens=optimized_input_tokens,
-        upstream_input_tokens=optimized_input_tokens,
+        upstream_input_tokens=actual_upstream_input,
         output_tokens=output_tokens,
         saved_tokens=saved_input_tokens,
         strategies=strategies,

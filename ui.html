@@ -618,6 +618,14 @@
         document.getElementById('raw-json-receipt').textContent = JSON.stringify(receipt, null, 2);
 
         document.getElementById('receipt-badge').textContent = receipt.cache || 'MISS';
+        if (receipt.cache === 'SOFT_HIT' && receipt.soft_hit_verification && receipt.soft_hit_verification.verdict === 'accept') {
+          document.getElementById('receipt-badge').textContent = 'SOFT_HIT ✓ VERIFIED';
+        } else if (receipt.strategies && receipt.strategies.includes('soft_hit_rejected')) {
+          document.getElementById('receipt-badge').textContent = 'MISS (soft hit rejected)';
+        }
+        if (receipt.truncated) {
+          document.getElementById('receipt-badge').textContent += ' · TRUNCATED';
+        }
         if (receipt.cache === 'EXACT_HIT' || receipt.cache === 'HIT') {
           document.getElementById('receipt-badge').className = 'px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-code text-[11px] font-semibold animate-pulse';
         } else {
@@ -627,7 +635,11 @@
         document.getElementById('receipt-meta').textContent = `Req #${(receipt.request_id || '').substring(0, 8)} · ${receipt.provider || 'cache'}`;
         document.getElementById('receipt-raw-in').textContent = (receipt.raw_input_tokens || 0) + ' tokens';
         document.getElementById('receipt-opt-in').textContent = (receipt.optimized_input_tokens || 0) + ' tokens';
-        document.getElementById('receipt-upstream-in').textContent = (receipt.upstream_input_tokens || 0) + ' tokens';
+        // Label whose tokenizer produced the upstream number. Provider counts use the
+        // provider's own tokenizer and are never subtracted from our estimates.
+        const upstreamSource = receipt.upstream_token_source === 'provider' ? ' (billed)'
+          : receipt.upstream_token_source === 'cache' ? '' : ' (est.)';
+        document.getElementById('receipt-upstream-in').textContent = (receipt.upstream_input_tokens || 0) + ' tokens' + upstreamSource;
         document.getElementById('receipt-output-tok').textContent = (receipt.output_tokens || 0) + ' tokens';
         document.getElementById('receipt-net-spared').textContent = (receipt.saved_input_tokens || 0) + ' tokens';
         document.getElementById('receipt-cost-spared').textContent = `${(receipt.saved_input_tokens || 0)} tokens spared`;

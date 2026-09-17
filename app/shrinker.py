@@ -1,10 +1,23 @@
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from typing import Any
 
 from app.budgeter import get_budget_directive
+
+# Number of trailing history messages kept byte-for-byte before the latest user turn.
+# Truncated summaries destroy the detail a model needs; recent turns carry most of it.
+DEFAULT_VERBATIM_TURNS = 2
+
+
+def _verbatim_turn_count() -> int:
+    try:
+        value = int(os.getenv("TOKENSHIELD_VERBATIM_TURNS", str(DEFAULT_VERBATIM_TURNS)))
+    except ValueError:
+        return DEFAULT_VERBATIM_TURNS
+    return max(0, value)
 
 
 @dataclass(frozen=True)
@@ -12,6 +25,7 @@ class ShrinkResult:
     turns_shrunk: int = 0
     applied: bool = False
     budget_mode: str = "saving"
+    turns_kept_verbatim: int = 0
 
 
 def _extract_text(content: Any) -> str:
@@ -85,27 +99,41 @@ def shrink_conversation(
     subsequent_messages = [dict(m) for m in messages[latest_user_idx + 1:]]
 
     original_system_prompts: list[str] = []
-    turn_summaries: list[str] = []
+    conversation_turns: list[dict[str, Any]] = []
 
     for msg in history_messages:
-        role = msg.get("role", "user")
-        content_text = _extract_text(msg.get("content"))
-        if role == "system":
+        if msg.get("role") == "system":
+            content_text = _extract_text(msg.get("content"))
             if content_text:
                 original_system_prompts.append(content_text)
         else:
-            turn_summaries.append(_summarize_turn(role, content_text))
+            conversation_turns.append(msg)
 
-    # Build compact system context block
+    # Keep the most recent turns intact; only older turns get summarized.
+    keep = _verbatim_turn_count()
+    if keep > 0:
+        verbatim_turns = [dict(m) for m in conversation_turns[-keep:]]
+        older_turns = conversation_turns[:-keep] if len(conversation_turns) > keep else []
+    else:
+        verbatim_turns = []
+        older_turns = conversation_turns
+
+    turn_summaries = [
+        _summarize_turn(msg.get("role", "user"), _extract_text(msg.get("content")))
+        for msg in older_turns
+    ]
+
+    # Section order matters: stable content first so provider prompt-prefix caching
+    # can match across turns. The summary block grows by append, so it comes last.
     sections: list[str] = []
     if original_system_prompts:
         sections.append("[System Instructions]\n" + "\n".join(original_system_prompts))
 
-    if turn_summaries:
-        sections.append("[Previous Session Summary]\n" + "\n".join(f"- {s}" for s in turn_summaries))
-
     if directive:
         sections.append(directive)
+
+    if turn_summaries:
+        sections.append("[Earlier Conversation Summary]\n" + "\n".join(f"- {s}" for s in turn_summaries))
 
     compact_system_text = "\n\n".join(sections).strip()
 
@@ -113,8 +141,14 @@ def shrink_conversation(
     if compact_system_text:
         shrunk_messages.append({"role": "system", "content": compact_system_text})
 
+    shrunk_messages.extend(verbatim_turns)
     shrunk_messages.append(latest_user_msg)
     shrunk_messages.extend(subsequent_messages)
 
-    turns_shrunk = len(history_messages)
-    return shrunk_messages, ShrinkResult(turns_shrunk=turns_shrunk, applied=True, budget_mode=budget_mode)
+    turns_shrunk = len(older_turns)
+    return shrunk_messages, ShrinkResult(
+        turns_shrunk=turns_shrunk,
+        applied=bool(turn_summaries),
+        budget_mode=budget_mode,
+        turns_kept_verbatim=len(verbatim_turns),
+    )

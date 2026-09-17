@@ -45,6 +45,7 @@ class Settings:
     db_path: str
     embedding_backend: str
     providers: tuple[ProviderConfig, ...]
+    verify_soft_hits: bool = True
 
 
 def indexed_provider_configs(max_providers: int = 20) -> tuple[ProviderConfig, ...]:
@@ -142,4 +143,6 @@ def get_settings() -> Settings:
         db_path=os.getenv("TOKENSHIELD_DB_PATH", ".tokenshield/tokenshield.sqlite3"),
         embedding_backend=os.getenv("TOKENSHIELD_EMBEDDING_BACKEND", "hash"),
         providers=providers,
+        verify_soft_hits=os.getenv("TOKENSHIELD_VERIFY_SOFT_HITS", "true").strip().lower()
+        not in {"0", "false", "no", "off"},
     )

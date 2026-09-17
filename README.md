@@ -34,7 +34,7 @@ Add your provider API keys (Google, Groq, Vercel, etc.) inside `.env.local`.
 python -m uvicorn app.main:app --reload
 ```
 
-### 4. Run Test Suite (48 Tests Passing)
+### 4. Run Test Suite (58 Tests Passing)
 ```bash
 python -m pytest -p no:cacheprovider --basetemp=.tokenshield/pytest_temp -v
 ```
@@ -87,6 +87,56 @@ TOKENSHIELD_PROVIDER_2_API_KEY_ENV=VERCEL_KEY_2
 TOKENSHIELD_PROVIDER_2_MODEL=openai/gpt-5.5
 ```
 
+## Receipt Integrity
+
+The receipt is the product, so its numbers are held to a few rules:
+
+- **Savings are computed inside one tokenizer.** `saved_input_tokens` is always
+  `raw_input_tokens - optimized_input_tokens`, both measured with TokenShield's own
+  encoder. The provider's billed prompt count is reported separately as
+  `upstream_input_tokens`, tagged with `upstream_token_source` (`provider`, `estimated`,
+  or `cache`). The two are never subtracted from each other, because providers use
+  different tokenizers and the difference would be noise, not savings.
+- **The receipt and `/metrics/live` always agree.** Both read the same figure.
+- **Output savings say what they are based on.** `output_savings_basis` is
+  `measured_avg` once this deployment has enough of its own unconstrained (`normal`
+  mode) responses to average, and `default_baseline` before that. The comparison
+  baseline is exposed as `output_baseline_tokens`.
+- **Truncated answers are not savings.** If an answer stops because it hit the cap
+  (`finish_reason == "length"`), the receipt sets `truncated: true`, adds the
+  `output_truncated` strategy, and reports zero output savings. A cut-off answer costs
+  full price and is unusable.
+- **Caps are only reported when applied.** `max_output_tokens_applied` shows whether a
+  cap was actually sent upstream. Outside `critical` mode, TokenShield shapes answer
+  length through the budget directive rather than a hard cap, because prompt-level
+  instructions compress and hard caps truncate.
+
+## Verified Soft Hits
+
+A `SOFT_HIT` (0.90–0.95 cosine) is a *close vector match*, which is not the same thing
+as a correct answer. Before serving one, TokenShield spends a handful of tokens asking
+the cheapest configured provider a single yes/no question: does this cached answer
+actually answer the new question?
+
+- Accepted → served from cache, zero generation tokens, badge shows `SOFT_HIT ✓ VERIFIED`.
+- Rejected → falls through to a real upstream call, `soft_hit_rejected` appears in the
+  strategy list, and the receipt records the verdict.
+- Verifier unavailable or unparseable → fails open and serves the hit, so a broken
+  checker never blocks a working cache.
+
+Toggle with `TOKENSHIELD_VERIFY_SOFT_HITS`.
+
+## Conversation Shrinking
+
+Older turns are summarized; the most recent turns are kept **byte-for-byte**
+(`TOKENSHIELD_VERBATIM_TURNS`, default 2). Truncating recent history to a one-line
+summary is where answer quality goes to die, and input tokens are the cheaper half of
+the bill — so the shrinker trades a little compression for fidelity where it counts.
+
+The rebuilt system block is ordered **stable content first**: system instructions, then
+the budget directive, then the append-only summary. That keeps a constant prefix across
+turns so provider prompt-prefix caching can match it.
+
 ## Caching & Optimization
 
 TokenShield employs a multi-tier cache to maximize token savings:
@@ -99,6 +149,11 @@ TokenShield employs a multi-tier cache to maximize token savings:
 ### Embedding Backend
 
 By default, TokenShield uses a fast, deterministic, zero-dependency 384-dimensional hash embedding backend (`hash`).
+
+> **Use `sentence-transformers` for any real demo.** The `hash` backend is a signed
+> bag-of-words projection: it has no notion of word order or negation, so "how do I sort
+> this list" and "how do I *not* sort this list" land in nearly the same place. It exists
+> so the project runs with zero extra dependencies, not because it is accurate.
 
 To use real neural embeddings (`sentence-transformers/all-MiniLM-L6-v2`):
 

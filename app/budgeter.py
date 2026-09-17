@@ -5,7 +5,8 @@ import os
 BUDGET_DIRECTIVES = {
     "saving": (
         "[Answer Budget: SAVING]\n"
-        "Lead with the direct answer in the first sentence. Crisp code if relevant. Zero preamble, zero filler."
+        "Lead with the direct answer. Max 3 short sections. Code only when it IS the answer. "
+        "No preamble, no restatement, no closing summary."
     ),
     "critical": (
         "[Answer Budget: CRITICAL]\n"
@@ -49,9 +50,22 @@ def get_budget_output_cap(mode: str) -> int:
     return BUDGET_MAX_OUTPUT_TOKENS.get(mode.lower().strip(), 300)
 
 
-def estimate_output_tokens_saved(mode: str, actual_output_tokens: int) -> int:
-    """Estimates output tokens saved compared to the unconstrained 700-token normal baseline."""
+def estimate_output_tokens_saved(
+    mode: str,
+    actual_output_tokens: int,
+    baseline: int | None = None,
+) -> int:
+    """
+    Estimates output tokens saved versus an unconstrained answer.
+
+    `baseline` should be the measured average output length of this deployment's
+    own `normal`-mode responses. When no measurement is available yet, falls back
+    to the documented default cap. Callers must surface which basis was used --
+    see `output_savings_basis` in the request receipt -- so the number is never
+    presented as a hard measurement when it is an estimate.
+    """
     if mode.lower().strip() == "normal":
         return 0
-    baseline = BUDGET_MAX_OUTPUT_TOKENS["normal"]
+    if baseline is None or baseline <= 0:
+        baseline = BUDGET_MAX_OUTPUT_TOKENS["normal"]
     return max(0, baseline - actual_output_tokens)
