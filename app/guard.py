@@ -23,8 +23,11 @@ class GuardResult:
 
 SECRET_PATTERNS = [
     re.compile(r"\bvck_[A-Za-z0-9_]{25,}\b"),
-    re.compile(r"\bsk-(?:proj-)?[A-Za-z0-9-_]{20,}\b"),
+    re.compile(r"\bsk[-_](?:proj[-_]|live[-_]|test[-_]|ant[-_])?[A-Za-z0-9-_]{20,}\b"),
     re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{30,}\b"),
+    re.compile(r"\bhf_[A-Za-z0-9]{30,}\b"),
+    re.compile(r"\bAIza[0-9A-Za-z-_]{30,40}\b"),
+    re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"\beyJ[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\b"),
     re.compile(r"\bBearer\s+[A-Za-z0-9\-_.~+/]{20,}\b", re.IGNORECASE),
     re.compile(r"(?i)\b(?:api[_-]?key|secret|token|password)\s*[:=]\s*['\"]?([A-Za-z0-9-_]{16,})['\"]?"),

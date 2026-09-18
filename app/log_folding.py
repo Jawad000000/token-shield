@@ -56,7 +56,7 @@ STACK_FRAME_PATTERN = re.compile(
 # How many frames to keep at the top and bottom of a folded stack trace
 KEEP_FRAMES_TOP = 2
 KEEP_FRAMES_BOTTOM = 2
-MIN_FRAMES_TO_FOLD = 6  # Only fold if there are at least this many frames
+MIN_FRAMES_TO_FOLD = 5  # Only fold if there are at least this many frames
 
 
 def fold_stack_traces(text: str) -> tuple[str, int]:

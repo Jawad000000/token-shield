@@ -27,6 +27,25 @@ def test_guard_unit_redaction_secrets_and_pii() -> None:
     assert "[REDACTED_PHONE_1]" in clean
 
 
+def test_guard_unit_redaction_extended_secret_formats() -> None:
+    # Use concatenated dummy strings to avoid repository secret-scanning false positives
+    live_key = "sk_live_" + "99a8b7c6d5e4f3a2b1c09876543210ab"
+    test_key = "sk_test_" + "1234567890abcdef1234567890ab"
+    aws_key = "AKIA" + "IOSFODNN7EXAMPLE"
+    google_key = "AIza" + "SyD1234567890abcdef1234567890abcde"
+    hf_key = "hf_" + "1234567890abcdef1234567890abcdef12"
+
+    text = f"Stripe key: {live_key}, Test key: {test_key}, AWS key: {aws_key}, Google key: {google_key}, HF key: {hf_key}"
+    clean, sec_count, _ = redact_text(text)
+    assert sec_count == 5
+    assert "sk_live_" not in clean
+    assert "sk_test_" not in clean
+    assert aws_key not in clean
+    assert google_key not in clean
+    assert "hf_" not in clean
+    assert clean.count("[REDACTED_SECRET_") == 5
+
+
 def test_guard_unit_supports_multipart_and_immutability() -> None:
     original = [
         {"role": "system", "content": "You are a helpful tutor."},
