@@ -39,6 +39,52 @@ def tabularize_json_list(data: list[Any]) -> str | None:
     return table
 
 
+def _extract_key_schema(obj: Any) -> set[str] | None:
+    """Extract the set of top-level keys from a dict. Returns None for non-dicts."""
+    if isinstance(obj, dict) and obj:
+        return set(obj.keys())
+    return None
+
+
+def collapse_homogeneous_array(data: list[Any], min_items: int = 5) -> str | None:
+    """
+    Collapses a JSON array where all items are objects with the same key schema
+    into a compact representation: schema + first 2 samples + count.
+
+    Works for nested structures (not limited to flat scalar values).
+    Only activates for arrays with >= min_items homogeneous objects.
+    """
+    if len(data) < min_items:
+        return None
+
+    first_schema = _extract_key_schema(data[0])
+    if first_schema is None:
+        return None
+
+    for item in data[1:]:
+        item_schema = _extract_key_schema(item)
+        if item_schema != first_schema:
+            return None
+
+    # All items share the same schema — collapse
+    sorted_keys = sorted(first_schema)
+    schema_str = ", ".join(sorted_keys)
+
+    # Show first 2 samples minified
+    samples = []
+    for item in data[:2]:
+        samples.append(json.dumps(item, separators=(",", ":"), ensure_ascii=False))
+
+    total = len(data)
+    result = (
+        f"[Array of {total} objects, schema: {{{schema_str}}}]\n"
+        f"Sample[0]: {samples[0]}\n"
+        f"Sample[1]: {samples[1]}\n"
+        f"[...{total - 2} more items with same structure]"
+    )
+    return result
+
+
 def compress_json_snippet(snippet: str) -> str | None:
     """
     Parses a JSON string.
@@ -54,8 +100,14 @@ def compress_json_snippet(snippet: str) -> str | None:
     except Exception:
         return None
 
-    # Check if tabularization applies for uniform lists
+    # Check if array deduplication applies for uniform lists
     if isinstance(data, list):
+        # Try schema-based collapse first (works for nested structures)
+        collapsed = collapse_homogeneous_array(data)
+        if collapsed and len(collapsed) < len(cleaned) * 0.85:
+            return collapsed
+
+        # Fallback: try flat tabularization
         table = tabularize_json_list(data)
         if table and len(table) < len(cleaned) * 0.85:
             return table

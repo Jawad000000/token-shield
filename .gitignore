@@ -3,5 +3,10 @@ node_modules/
 .tokenshield/
 .pytest_cache/
 .pytest_temp/
+.pytest_tmp/
+scratch/
+*.db
+token_shield.db
 __pycache__/
 *.pyc
+

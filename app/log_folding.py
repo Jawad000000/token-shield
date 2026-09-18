@@ -19,9 +19,143 @@ NOISE_LINE_PATTERN = re.compile(
     r"\b(info|debug|verbose|trace)\b|"                              # log levels
     r"^\s*(\[={2,}>?\]|\.{3,}|[-=]{5,}|\d+%\s*\[|\d+/\d+\s*\[)|"   # progress bars
     r"\b(downloading|fetching|installing|compiling|cached|extracting|resolving)\b|"
-    r"^\s*(tests?\/.*(passed|skipped)|ok\s+[\w\.\/-]+|success\b)",  # test suite passes
+    r"^\s*(tests?\/.*(passed|skipped)|ok\s+[\w\.\/\-]+|success\b)",  # test suite passes
     re.IGNORECASE,
 )
+
+# ── Stack trace patterns ─────────────────────────────────────────────────────
+
+# Python: "  File "path.py", line N, in func"
+PYTHON_FRAME_PATTERN = re.compile(r'^\s*File\s+".*",\s+line\s+\d+', re.IGNORECASE)
+# Python traceback header
+PYTHON_TB_HEADER = re.compile(r"^\s*Traceback\s*\(most\s+recent\s+call\s+(last|first)\)\s*:", re.IGNORECASE)
+
+# Java/Kotlin: "  at com.example.Class.method(File.java:123)"
+JAVA_FRAME_PATTERN = re.compile(r"^\s*at\s+[\w\.$<>]+\.[\w$<>]+\([\w\.$]+:\d+\)", re.IGNORECASE)
+
+# Node/JS: "    at Object.<anonymous> (/path/to/file.js:12:34)"
+NODE_FRAME_PATTERN = re.compile(r"^\s*at\s+.*\(.*:\d+:\d+\)", re.IGNORECASE)
+
+# .NET/C#: "   at Namespace.Class.Method() in File.cs:line 123"
+DOTNET_FRAME_PATTERN = re.compile(r"^\s*at\s+[\w\.]+\(.*\)\s+in\s+.*:line\s+\d+", re.IGNORECASE)
+
+# Generic exception line (e.g. "TypeError: ...", "java.lang.NullPointerException: ...")
+EXCEPTION_LINE_PATTERN = re.compile(
+    r"^\s*(\w+Error|\w+Exception|\w+Fault)\s*:", re.IGNORECASE
+)
+
+# Combined: any line that looks like a stack frame
+STACK_FRAME_PATTERN = re.compile(
+    r"^\s*File\s+\".*\",\s+line\s+\d+"       # Python
+    r"|^\s*at\s+[\w\.$<>]+.*[\(:]"            # Java/Node/C#
+    r"|^\s*---\s*End of inner exception.*"     # .NET inner exception
+    r"|^\s*\.\.\.\s*\d+\s+more\s*$",          # Java "... 12 more"
+    re.IGNORECASE,
+)
+
+# How many frames to keep at the top and bottom of a folded stack trace
+KEEP_FRAMES_TOP = 2
+KEEP_FRAMES_BOTTOM = 2
+MIN_FRAMES_TO_FOLD = 6  # Only fold if there are at least this many frames
+
+
+def fold_stack_traces(text: str) -> tuple[str, int]:
+    """
+    Detects stack traces in text and folds middle frames, keeping the error line
+    plus the top and bottom frames for context.
+
+    Returns (folded_text, total_frames_folded).
+    """
+    lines = text.split("\n")
+    result_lines: list[str] = []
+    total_folded = 0
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+
+        # Detect Python traceback header
+        if PYTHON_TB_HEADER.match(line):
+            trace_block = [line]
+            i += 1
+            # Collect all subsequent frame lines and their context lines
+            frame_lines: list[str] = []
+            error_line: str | None = None
+
+            while i < len(lines):
+                l = lines[i]
+                if PYTHON_FRAME_PATTERN.match(l):
+                    frame_lines.append(l)
+                    i += 1
+                    # Python frames are followed by a code context line
+                    if i < len(lines) and lines[i].strip() and not PYTHON_FRAME_PATTERN.match(lines[i]) and not PYTHON_TB_HEADER.match(lines[i]):
+                        frame_lines.append(lines[i])
+                        i += 1
+                elif l.strip() and not PYTHON_TB_HEADER.match(l):
+                    # This is likely the exception line at the bottom
+                    error_line = l
+                    i += 1
+                    break
+                else:
+                    break
+
+            if len(frame_lines) >= MIN_FRAMES_TO_FOLD:
+                # Keep top N and bottom N frame lines
+                keep_top = frame_lines[:KEEP_FRAMES_TOP * 2]  # *2 because each frame has code line
+                keep_bottom = frame_lines[-(KEEP_FRAMES_BOTTOM * 2):]
+                middle_count = len(frame_lines) - len(keep_top) - len(keep_bottom)
+                if middle_count > 0:
+                    folded_frames = middle_count // 2 or middle_count
+                    total_folded += middle_count
+                    result_lines.append(trace_block[0])  # Traceback header
+                    result_lines.extend(keep_top)
+                    result_lines.append(f"    [... {folded_frames} more frames ...]")
+                    result_lines.extend(keep_bottom)
+                    if error_line:
+                        result_lines.append(error_line)
+                    continue
+                # Not enough middle to fold — keep all
+                result_lines.extend(trace_block)
+                result_lines.extend(frame_lines)
+                if error_line:
+                    result_lines.append(error_line)
+            else:
+                # Too few frames to fold — keep all
+                result_lines.extend(trace_block)
+                result_lines.extend(frame_lines)
+                if error_line:
+                    result_lines.append(error_line)
+            continue
+
+        # Detect Java/Node/.NET stack trace (starts with "at ..." line)
+        if STACK_FRAME_PATTERN.match(line) and not PYTHON_FRAME_PATTERN.match(line):
+            frame_lines = [line]
+            i += 1
+            while i < len(lines) and STACK_FRAME_PATTERN.match(lines[i]):
+                frame_lines.append(lines[i])
+                i += 1
+
+            if len(frame_lines) >= MIN_FRAMES_TO_FOLD:
+                keep_top = frame_lines[:KEEP_FRAMES_TOP]
+                keep_bottom = frame_lines[-KEEP_FRAMES_BOTTOM:]
+                middle_count = len(frame_lines) - KEEP_FRAMES_TOP - KEEP_FRAMES_BOTTOM
+                if middle_count > 0:
+                    total_folded += middle_count
+                    result_lines.extend(keep_top)
+                    result_lines.append(f"    [... {middle_count} more frames ...]")
+                    result_lines.extend(keep_bottom)
+                else:
+                    result_lines.extend(frame_lines)
+            else:
+                result_lines.extend(frame_lines)
+            continue
+
+        result_lines.append(line)
+        i += 1
+
+    if total_folded > 0:
+        return "\n".join(result_lines), total_folded
+    return text, 0
 
 
 def is_critical_line(line: str) -> bool:
@@ -37,11 +171,14 @@ def is_noise_line(line: str) -> bool:
 def fold_log_text(text: str, min_consecutive_noise: int = 3) -> tuple[str, int]:
     """
     Scans multiline text for repetitive terminal/compiler log lines and repeated error messages.
-    Preserves all first error instances, warnings, stack traces, and question context verbatim.
+    First folds stack traces, then folds noise lines, then folds repeated error bursts.
     Folds blocks of >= min_consecutive_noise repetitive lines into a concise summary.
     """
+    # Pre-pass: fold stack traces first
+    text, stack_folded = fold_stack_traces(text)
+
     lines = text.split("\n")
-    if len(lines) < min_consecutive_noise:
+    if len(lines) < min_consecutive_noise and stack_folded == 0:
         return text, 0
 
     intermediate_lines: list[str] = []
@@ -118,6 +255,7 @@ def fold_log_text(text: str, min_consecutive_noise: int = 3) -> tuple[str, int]:
 
     flush_repeat_buffer()
 
+    total_lines_folded += stack_folded
     if total_lines_folded > 0:
         return "\n".join(final_lines), total_lines_folded
     return text, 0

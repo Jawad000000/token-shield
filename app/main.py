@@ -18,6 +18,7 @@ from app.budgeter import (
 )
 from app.cache import SemanticCache, build_cache_query, hash_cache_key
 from app.code_pruning import prune_code_snippets
+from app.binary_detector import detect_binary_in_messages
 from app.comment_stripper import strip_comments_in_messages
 from app.config import get_settings
 from app.db import Database
@@ -367,8 +368,13 @@ async def chat_completions(
     if comments_stripped_count > 0:
         base_strategies.append("comment_stripping")
 
+    # Step D2.5: Detect and replace base64 data, hex dumps, and long hashes
+    binary_cleaned_messages, binary_replaced_count = detect_binary_in_messages(comment_stripped_messages)
+    if binary_replaced_count > 0:
+        base_strategies.append("binary_data_detection")
+
     # Step D3: Compact verbose phrases ("in order to" → "to", etc.)
-    phrase_compacted_messages, phrases_compacted_count = compact_phrases_in_messages(comment_stripped_messages)
+    phrase_compacted_messages, phrases_compacted_count = compact_phrases_in_messages(binary_cleaned_messages)
     if phrases_compacted_count > 0:
         base_strategies.append("phrase_compaction")
 
