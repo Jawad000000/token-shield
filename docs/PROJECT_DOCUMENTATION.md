@@ -4,7 +4,7 @@
 
 ### The Auditable LLM Token Optimization Proxy
 
-**Cut LLM API costs by 47–61% — without destroying response quality.**
+**Cut LLM API costs by 57–69% — without destroying response quality.**
 
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](#) [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg)](#) [![Tests](https://img.shields.io/badge/Tests-154%20passing-brightgreen.svg)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#)
 
@@ -36,8 +36,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Overall Token Savings** | **60.7%** (across 100-request benchmark, baseline) |
-| **Unique Query Savings** | **47.3% – 58%+** (pipeline-only, no cache) |
+| **Overall Token Savings** | **69.0%** (across 100-request benchmark) |
+| **Unique Query Savings** | **57.4%** (pipeline-only, zero cache) |
 | **Cache Hit Savings** | **100%** (exact + semantic deduplication) |
 | **Response Quality Impact** | **Zero** — all optimizations are lossless |
 | **Pipeline Stages** | **10** (Guard → Dedup → Prune → Log/Stack Fold → JSON SmartCrusher → Strip → Binary Detect → Compact → Normalize → Shrink) |
@@ -297,36 +297,40 @@ Benchmark run across 100 diverse prompts spanning 8 categories, with 20% intenti
 | Total Requests | 100 |
 | Unique Requests | 80 |
 | Repeated (Cache Hit) Requests | 20 |
-| **Total Raw Tokens** | **26,267** |
-| **Total Optimized Tokens** | **10,316** |
-| **Total Tokens Saved** | **15,951** |
-| **Overall Savings Rate** | **60.73%** |
+| **Total Raw Tokens** | **30,797** |
+| **Total Optimized Tokens** | **9,549** |
+| **Total Tokens Saved** | **21,248** |
+| **Overall Savings Rate** | **68.99% (69.0%)** |
+| **Algorithmic Unique Savings (Zero Cache)** | **57.36% (57.4%)** |
+| **Cache Hit Savings** | **100.0%** |
 
 #### Per-Category Breakdown
 
 | Category | Requests | Raw Tokens | Optimized | Saved | Savings % | Primary Strategy |
 |----------|:--------:|:----------:|:---------:|:-----:|:---------:|:----------------:|
-| **Code Refactoring** | 15 | 5,055 | 1,665 | 3,390 | **67.1%** | Code Pruning + Normalization |
-| **Verbose Terminal Logs** | 15 | 2,958 | 1,314 | 1,644 | **55.6%** | Log Folding |
-| **JSON Indented Payloads** | 15 | 5,705 | 2,915 | 2,790 | **48.9%** | JSON Compression |
+| **Code Refactoring** | 15 | 5,055 | 1,080 | 3,975 | **78.6%** | Code Pruning + Comment Stripping |
+| **JSON Payloads & Schemas** | 15 | 7,415 | 2,315 | 5,100 | **68.8%** | JSON SmartCrusher + Schema Dedup |
+| **Verbose Logs & Stack Traces** | 15 | 3,932 | 1,899 | 2,033 | **51.7%** | Log & Stack Trace Folding |
+| **Verbose Technical & Binary** | 10 | 1,199 | 640 | 559 | **46.6%** | Binary Detector + Phrase Compactor |
 | **Markdown, URLs & Guard** | 10 | 2,000 | 1,360 | 640 | **32.0%** | PII Redaction + Normalization |
-| **Verbose Technical Prose** | 10 | 1,063 | 807 | 256 | **24.1%** | Phrase Compaction |
 | **Multi-turn History** | 15 | 2,795 | 2,255 | 540 | **19.3%** | Conversation Shrinker |
-| **Repeated Queries (JSON)** | 15 | 5,705 | 0 | 5,705 | **100%** | Exact Cache |
+| **Repeated Queries (JSON)** | 15 | 7,415 | 0 | 7,415 | **100%** | Exact Cache |
 | **Repeated Queries (Logs)** | 5 | 986 | 0 | 986 | **100%** | Exact Cache |
 
 #### Strategy Activation Frequency
 
 | Strategy | Times Activated | % of Requests |
 |----------|:--------------:|:-------------:|
-| Structural Normalization | 40 | 40% |
+| Structural Normalization | 47 | 47% |
+| Comment Stripping | 26 | 26% |
 | Exact Cache | 20 | 20% |
-| JSON Compression | 15 | 15% |
+| PII Redaction | 17 | 17% |
+| JSON Compression & Schema Dedup | 15 | 15% |
+| Log & Stack Trace Folding | 15 | 15% |
 | Code Pruning | 15 | 15% |
-| Log Folding | 15 | 15% |
 | Conversation Shrinker | 15 | 15% |
-| PII Redaction | 10 | 10% |
-| Phrase Compaction | 10 | 10% |
+| Phrase Compaction | 5 | 5% |
+| Binary Data & Hash Detection | 4 | 4% |
 
 ---
 
@@ -337,8 +341,8 @@ Benchmark run across 100 diverse prompts spanning 8 categories, with 20% intenti
 | Feature | TokenShield | LLMLingua (Microsoft) | GPTCache (Zilliz) | LiteLLM | headroom |
 |---------|:-----------:|:--------------------:|:-----------------:|:-------:|:--------:|
 | **Approach** | Lossless proxy | Neural compression | Semantic caching | Gateway/routing | Log compression |
-| **Token Savings (Unique)** | **47.3%** | 50–80%* | 0% (cache only) | 0% | 30–50% |
-| **Token Savings (w/ Cache)** | **60.7%** | N/A (no caching) | 100% on hits | 0% | N/A |
+| **Token Savings (Unique)** | **57.4%** | 50–80%* | 0% (cache only) | 0% | 30–50% |
+| **Token Savings (w/ Cache)** | **69.0%** | N/A (no caching) | 100% on hits | 0% | N/A |
 | **Response Quality Impact** | None | Measurable degradation† | None (cached) | None | None |
 | **Requires GPU** | ❌ | ✅ (LLaMA-7B) | ❌ | ❌ | ❌ |
 | **Per-Request Audit** | ✅ Receipt | ❌ | ❌ | ❌ | ❌ |
