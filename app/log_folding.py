@@ -36,15 +36,15 @@ def is_noise_line(line: str) -> bool:
 
 def fold_log_text(text: str, min_consecutive_noise: int = 3) -> tuple[str, int]:
     """
-    Scans multiline text for repetitive terminal/compiler log lines.
-    Preserves all errors, warnings, stack traces, and question context verbatim.
+    Scans multiline text for repetitive terminal/compiler log lines and repeated error messages.
+    Preserves all first error instances, warnings, stack traces, and question context verbatim.
     Folds blocks of >= min_consecutive_noise repetitive lines into a concise summary.
     """
     lines = text.split("\n")
     if len(lines) < min_consecutive_noise:
         return text, 0
 
-    folded_lines: list[str] = []
+    intermediate_lines: list[str] = []
     noise_buffer: list[str] = []
     total_lines_folded = 0
 
@@ -53,11 +53,10 @@ def fold_log_text(text: str, min_consecutive_noise: int = 3) -> tuple[str, int]:
         if not noise_buffer:
             return
         if len(noise_buffer) < min_consecutive_noise:
-            folded_lines.extend(noise_buffer)
+            intermediate_lines.extend(noise_buffer)
         else:
             first_line = noise_buffer[0].strip()
             last_line = noise_buffer[-1].strip()
-            # Truncate first/last preview to 60 chars for neatness
             if len(first_line) > 60:
                 first_line = first_line[:57] + "..."
             if len(last_line) > 60:
@@ -66,7 +65,7 @@ def fold_log_text(text: str, min_consecutive_noise: int = 3) -> tuple[str, int]:
             count = len(noise_buffer)
             total_lines_folded += count
             folded_marker = f"[Folded {count} terminal/log lines: '{first_line}' ... '{last_line}']"
-            folded_lines.append(folded_marker)
+            intermediate_lines.append(folded_marker)
         noise_buffer.clear()
 
     for line in lines:
@@ -74,12 +73,53 @@ def fold_log_text(text: str, min_consecutive_noise: int = 3) -> tuple[str, int]:
             noise_buffer.append(line)
         else:
             flush_noise_buffer()
-            folded_lines.append(line)
+            intermediate_lines.append(line)
 
     flush_noise_buffer()
 
+    # Pass 2: Repeated identical/near-identical log lines (e.g. repeated error bursts)
+    final_lines: list[str] = []
+    repeat_buffer: list[str] = []
+    current_sig: str | None = None
+
+    def flush_repeat_buffer() -> None:
+        nonlocal total_lines_folded
+        if not repeat_buffer:
+            return
+        if len(repeat_buffer) >= (min_consecutive_noise - 1):
+            count = len(repeat_buffer)
+            total_lines_folded += count
+            preview = repeat_buffer[0].strip()
+            if len(preview) > 60:
+                preview = preview[:57] + "..."
+            final_lines.append(f"[Folded {count} repeated lines: '{preview}']")
+        else:
+            final_lines.extend(repeat_buffer)
+        repeat_buffer.clear()
+
+    for line in intermediate_lines:
+        stripped = line.strip()
+        if stripped and (re.search(r"\b(ERROR|WARN|INFO|DEBUG|FATAL|Exception|Timeout)\b", stripped, re.I) or re.match(r"^\[?\d{4}-\d{2}-\d{2}", stripped)):
+            sig = re.sub(r"^\[?\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?\]?\s*", "", stripped)
+            sig = re.sub(r"\[REDACTED_[A-Z0-9_]+\]", "[REDACTED]", sig)
+            sig = re.sub(r"_\d+\b", "", sig)
+            sig = re.sub(r"\b\d+\b", "", sig).strip()
+            if sig and sig == current_sig:
+                repeat_buffer.append(line)
+                continue
+            else:
+                flush_repeat_buffer()
+                current_sig = sig
+                final_lines.append(line)
+        else:
+            flush_repeat_buffer()
+            current_sig = None
+            final_lines.append(line)
+
+    flush_repeat_buffer()
+
     if total_lines_folded > 0:
-        return "\n".join(folded_lines), total_lines_folded
+        return "\n".join(final_lines), total_lines_folded
     return text, 0
 
 
