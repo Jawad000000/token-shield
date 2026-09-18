@@ -111,6 +111,9 @@ def normalize_markdown_segment(text: str) -> tuple[str, int]:
     3. Collapses excessive spaces in markdown tables
     4. Collapses 3+ consecutive newlines to 2
     5. Strips trailing whitespace per line
+    6. Converts tabs to spaces in prose
+    7. Collapses consecutive spaces to single space
+    8. Strips leading whitespace from prose lines (preserving list indentation)
     """
     mods = 0
 
@@ -126,16 +129,48 @@ def normalize_markdown_segment(text: str) -> tuple[str, int]:
 
     text, delim_mods = DELIMITER_RUN_PATTERN.subn(replace_delimiter, text)
 
-    # 3. Compact markdown tables
+    # 3. Tab-to-space conversion
+    if "\t" in text:
+        tab_count = text.count("\t")
+        text = text.replace("\t", " ")
+        mods += tab_count
+
+    # 4. Collapse consecutive spaces (2+) to single space
+    collapsed_spaces, space_mods = re.subn(r"  +", " ", text)
+    if space_mods > 0:
+        text = collapsed_spaces
+        mods += space_mods
+
+    # 5. Compact markdown tables
     lines = text.split("\n")
     # Strip trailing whitespace on each line
     lines = [line.rstrip() for line in lines]
+
+    # Strip leading whitespace from prose lines, preserving:
+    # - List items (lines starting with -, *, +, or digit.)
+    # - Blockquotes (lines starting with >)
+    # - Table rows (lines starting with |)
+    stripped_lines: list[str] = []
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped and not re.match(r"^[-*+>|]|^\d+\.", stripped):
+            stripped_lines.append(stripped)
+        else:
+            stripped_lines.append(line.rstrip())
+    lines = stripped_lines
+
     compacted_lines = compact_markdown_table_lines(lines)
     text = "\n".join(compacted_lines)
 
-    # 4. Collapse 3+ newlines to 2 newlines (\n\n)
+    # 6. Collapse 3+ newlines to 2 newlines (\n\n)
     collapsed_text, nl_mods = re.subn(r"\n{3,}", "\n\n", text)
     mods += nl_mods
+
+    # 7. Strip leading/trailing blank lines from the entire segment
+    final = collapsed_text.strip("\n")
+    if final != collapsed_text:
+        mods += 1
+        collapsed_text = final
 
     return collapsed_text, mods
 

@@ -18,6 +18,7 @@ from app.budgeter import (
 )
 from app.cache import SemanticCache, build_cache_query, hash_cache_key
 from app.code_pruning import prune_code_snippets
+from app.comment_stripper import strip_comments_in_messages
 from app.config import get_settings
 from app.db import Database
 from app.embeddings import build_embedding_service
@@ -26,6 +27,7 @@ from app.json_compressor import compress_json_in_messages
 from app.log_folding import fold_logs_in_messages
 from app.memory import deduplicate_session_notes
 from app.normalizer import normalize_messages
+from app.phrase_compactor import compact_phrases_in_messages
 from app.providers import ProviderError, ProviderRouter
 from app.recommendations import build_recommendations
 from app.shrinker import shrink_conversation
@@ -360,8 +362,18 @@ async def chat_completions(
     if json_compressed_count > 0:
         base_strategies.append("json_compression")
 
-    # Step D2: Lossless structural normalization (Markdown tables, delimiter runs, tracking URLs)
-    normalized_messages, norm_mods_count = normalize_messages(json_compressed_messages)
+    # Step D2: Strip comments from code blocks (models don't need human comments)
+    comment_stripped_messages, comments_stripped_count = strip_comments_in_messages(json_compressed_messages)
+    if comments_stripped_count > 0:
+        base_strategies.append("comment_stripping")
+
+    # Step D3: Compact verbose phrases ("in order to" → "to", etc.)
+    phrase_compacted_messages, phrases_compacted_count = compact_phrases_in_messages(comment_stripped_messages)
+    if phrases_compacted_count > 0:
+        base_strategies.append("phrase_compaction")
+
+    # Step D4: Lossless structural normalization (Markdown tables, delimiter runs, tracking URLs, whitespace)
+    normalized_messages, norm_mods_count = normalize_messages(phrase_compacted_messages)
     if norm_mods_count > 0:
         base_strategies.append("structural_normalization")
 
@@ -387,6 +399,8 @@ async def chat_completions(
         code_pruned_count = 0
         logs_folded_count = 0
         json_compressed_count = 0
+        comments_stripped_count = 0
+        phrases_compacted_count = 0
         # Revert misleading strategies
         base_strategies = [s for s in base_strategies if s in ("guard_mode", "secret_redaction", "pii_redaction")]
         base_strategies.append("optimization_reverted_no_savings")
@@ -486,6 +500,8 @@ async def chat_completions(
         "code_pruned": code_pruned_count,
         "logs_folded": logs_folded_count,
         "json_compressed": json_compressed_count,
+        "comments_stripped": comments_stripped_count,
+        "phrases_compacted": phrases_compacted_count,
         "study": study_receipt,
     }
     receipt["recommendations"] = build_recommendations(receipt)
@@ -528,6 +544,8 @@ async def chat_completions(
         code_pruned=code_pruned_count,
         logs_folded=logs_folded_count,
         json_compressed=json_compressed_count,
+        comments_stripped=comments_stripped_count,
+        phrases_compacted=phrases_compacted_count,
     )
     db.record_study_event(
         session_id=session_id,

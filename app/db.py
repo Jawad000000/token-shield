@@ -59,6 +59,8 @@ class Database:
                 code_pruned integer not null default 0,
                 logs_folded integer not null default 0,
                 json_compressed integer not null default 0,
+                comments_stripped integer not null default 0,
+                phrases_compacted integer not null default 0,
                 created_at text not null default current_timestamp
             );
 
@@ -122,6 +124,8 @@ class Database:
             "code_pruned": "integer not null default 0",
             "logs_folded": "integer not null default 0",
             "json_compressed": "integer not null default 0",
+            "comments_stripped": "integer not null default 0",
+            "phrases_compacted": "integer not null default 0",
         }
         for name, definition in columns.items():
             if name not in existing:
@@ -214,6 +218,8 @@ class Database:
         code_pruned: int = 0,
         logs_folded: int = 0,
         json_compressed: int = 0,
+        comments_stripped: int = 0,
+        phrases_compacted: int = 0,
     ) -> None:
         with self._lock:
             self._conn.execute(
@@ -223,9 +229,9 @@ class Database:
                     optimized_input_tokens, upstream_input_tokens, output_tokens, saved_tokens,
                     strategies_json, failover_used, secrets_redacted, pii_redacted, guard_mode,
                     budget_mode, notes_deduplicated, turns_shrunk, cache, provider_attempts_json,
-                    code_pruned, logs_folded, json_compressed
+                    code_pruned, logs_folded, json_compressed, comments_stripped, phrases_compacted
                 )
-                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     request_id,
@@ -251,6 +257,8 @@ class Database:
                     code_pruned,
                     logs_folded,
                     json_compressed,
+                    comments_stripped,
+                    phrases_compacted,
                 ),
             )
             self._conn.commit()
