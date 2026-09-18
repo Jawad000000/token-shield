@@ -409,55 +409,112 @@
                 </div>
               </div>
 
-              <!-- TAB PANE 1: TOKEN BREAKDOWN -->
+              <!-- TAB PANE 1: TOKEN AUDIT RECEIPT -->
               <div id="tab-pane-receipt" class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] uppercase tracking-wider text-on-surface-variant dark:text-slate-400 font-semibold">Token Savings Breakdown</span>
-                  <span id="receipt-cost-spared" class="font-code text-[11px] text-secondary font-medium">0 tokens spared</span>
-                </div>
-                <div class="bg-surface-container-low dark:bg-slate-800/80 rounded-xl p-3 space-y-1.5 text-[12px]">
-                  <div class="flex items-center justify-between">
-                    <span class="text-on-surface-variant dark:text-slate-400">Raw Client Input:</span>
-                    <span id="receipt-raw-in" class="font-code text-outline">0 tokens</span>
+                <!-- Big Savings Hero -->
+                <div class="relative bg-gradient-to-br from-primary-container/20 via-secondary-fixed/20 to-surface-container-low dark:from-blue-900/30 dark:via-emerald-900/20 dark:to-slate-800/50 rounded-2xl p-4 overflow-hidden">
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[11px] uppercase tracking-wider text-on-surface-variant dark:text-slate-400 font-semibold">Token Savings This Request</span>
+                    <span id="receipt-cache-tag" class="px-2 py-0.5 rounded-full bg-surface-container-high dark:bg-slate-700 text-primary dark:text-blue-300 font-code text-[10px] font-semibold">MISS</span>
                   </div>
-                  <div class="flex items-center justify-between font-semibold">
-                    <span class="text-on-surface dark:text-slate-200">Optimized Payload:</span>
-                    <span id="receipt-opt-in" class="font-code text-primary">0 tokens</span>
+                  <div class="flex items-end justify-between gap-4">
+                    <div class="flex flex-col">
+                      <span id="receipt-savings-pct" class="font-headline font-bold text-[42px] leading-none text-primary dark:text-blue-400 tracking-tight">0%</span>
+                      <span class="text-[12px] text-on-surface-variant dark:text-slate-400 mt-1">tokens saved</span>
+                    </div>
+                    <div class="flex flex-col items-end gap-0.5">
+                      <span id="receipt-saved-count" class="font-code font-bold text-[18px] text-secondary dark:text-emerald-400">0</span>
+                      <span class="text-[11px] text-on-surface-variant dark:text-slate-400">tokens spared</span>
+                    </div>
                   </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-on-surface-variant dark:text-slate-400">Upstream Processed:</span>
-                    <span id="receipt-upstream-in" class="font-code text-on-surface dark:text-slate-200">0 tokens</span>
+                  <div class="mt-3 w-full h-3 bg-surface-container dark:bg-slate-700 rounded-full overflow-hidden flex">
+                    <div id="receipt-bar-optimized" class="bg-primary dark:bg-blue-500 h-full rounded-l-full transition-all duration-700 ease-out" style="width:0%"></div>
+                    <div id="receipt-bar-saved" class="bg-secondary dark:bg-emerald-500 h-full rounded-r-full transition-all duration-700 ease-out" style="width:0%"></div>
                   </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-on-surface-variant dark:text-slate-400">Output Tokens:</span>
-                    <span id="receipt-output-tok" class="font-code text-on-surface dark:text-slate-200">0 tokens</span>
-                  </div>
-                  <div class="pt-1 flex items-center justify-between font-semibold text-secondary">
-                    <span class="flex items-center gap-1">
-                      <span class="material-symbols-outlined text-[16px]">savings</span>
-                      Total Input Tokens Spared:
-                    </span>
-                    <span id="receipt-net-spared" class="font-code font-bold text-[14px]">0 tokens</span>
+                  <div class="flex items-center justify-between mt-1.5 text-[10px] text-on-surface-variant dark:text-slate-400">
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary dark:bg-blue-500 inline-block"></span> Sent Upstream</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-secondary dark:bg-emerald-500 inline-block"></span> Saved by Shield</span>
                   </div>
                 </div>
 
-                <!-- Noise Reduction & Guard Summary -->
-                <div class="grid grid-cols-2 gap-2 text-[12px]">
-                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2 rounded-xl flex flex-col">
-                    <span class="text-outline text-[10px]">Secrets Filtered</span>
+                <!-- Token Flow Breakdown -->
+                <div class="bg-surface-container-low dark:bg-slate-800/80 rounded-xl p-3 space-y-0">
+                  <div class="flex items-center justify-between py-2 border-b border-outline-variant/20">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-md bg-surface-container-high dark:bg-slate-700 flex items-center justify-center"><span class="material-symbols-outlined text-[14px] text-on-surface-variant">input</span></span>
+                      <span class="text-[12px] text-on-surface dark:text-slate-200 font-medium">Original Input</span>
+                    </div>
+                    <span id="receipt-raw-in" class="font-code text-[13px] font-semibold text-on-surface dark:text-white">0 tok</span>
+                  </div>
+                  <div class="flex items-center justify-between py-2 border-b border-outline-variant/20">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-md bg-primary-container/20 flex items-center justify-center"><span class="material-symbols-outlined text-[14px] text-primary">compress</span></span>
+                      <span class="text-[12px] text-on-surface dark:text-slate-200 font-medium">After Optimization</span>
+                    </div>
+                    <span id="receipt-opt-in" class="font-code text-[13px] font-semibold text-primary dark:text-blue-400">0 tok</span>
+                  </div>
+                  <div class="flex items-center justify-between py-2 border-b border-outline-variant/20">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-md bg-secondary-fixed/30 flex items-center justify-center"><span class="material-symbols-outlined text-[14px] text-secondary">savings</span></span>
+                      <span class="text-[12px] text-secondary font-semibold">Tokens Saved</span>
+                    </div>
+                    <span id="receipt-net-spared" class="font-code text-[13px] font-bold text-secondary dark:text-emerald-400">0 tok</span>
+                  </div>
+                  <div class="flex items-center justify-between py-2 border-b border-outline-variant/20">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-md bg-surface-container-high dark:bg-slate-700 flex items-center justify-center"><span class="material-symbols-outlined text-[14px] text-on-surface-variant">cloud_upload</span></span>
+                      <span class="text-[12px] text-on-surface-variant dark:text-slate-400">Upstream (Billed)</span>
+                    </div>
+                    <span id="receipt-upstream-in" class="font-code text-[12px] text-on-surface-variant dark:text-slate-400">0 tok</span>
+                  </div>
+                  <div class="flex items-center justify-between py-2">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-md bg-surface-container-high dark:bg-slate-700 flex items-center justify-center"><span class="material-symbols-outlined text-[14px] text-on-surface-variant">output</span></span>
+                      <span class="text-[12px] text-on-surface-variant dark:text-slate-400">Response Output</span>
+                    </div>
+                    <span id="receipt-output-tok" class="font-code text-[12px] text-on-surface-variant dark:text-slate-400">0 tok</span>
+                  </div>
+                </div>
+
+                <!-- Strategies Applied -->
+                <div class="space-y-1.5">
+                  <span class="text-[11px] uppercase tracking-wider text-on-surface-variant dark:text-slate-400 font-semibold">Strategies Applied</span>
+                  <div id="receipt-strategies-list" class="flex flex-wrap gap-1.5">
+                    <span class="px-2 py-1 rounded-lg bg-surface-container-low dark:bg-slate-800 text-[11px] text-outline italic">No strategies yet</span>
+                  </div>
+                </div>
+
+                <!-- Guard and Reduction Stats Grid -->
+                <div class="grid grid-cols-3 gap-2 text-[11px]">
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2.5 rounded-xl flex flex-col items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[16px] text-error">lock</span>
                     <span id="receipt-secrets" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                    <span class="text-outline text-[10px]">Secrets</span>
                   </div>
-                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2 rounded-xl flex flex-col">
-                    <span class="text-outline text-[10px]">PII Sanitized</span>
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2.5 rounded-xl flex flex-col items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[16px] text-tertiary">person_off</span>
                     <span id="receipt-pii" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                    <span class="text-outline text-[10px]">PII</span>
                   </div>
-                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2 rounded-xl flex flex-col">
-                    <span class="text-outline text-[10px]">Log Lines Folded</span>
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2.5 rounded-xl flex flex-col items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[16px] text-primary">compress</span>
                     <span id="receipt-logs-folded" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                    <span class="text-outline text-[10px]">Logs Folded</span>
                   </div>
-                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2 rounded-xl flex flex-col">
-                    <span class="text-outline text-[10px]">JSON Blocks Minified</span>
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2.5 rounded-xl flex flex-col items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[16px] text-secondary">data_object</span>
                     <span id="receipt-json-compact" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                    <span class="text-outline text-[10px]">JSON Min.</span>
+                  </div>
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2.5 rounded-xl flex flex-col items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[16px] text-primary">code_off</span>
+                    <span id="receipt-comments-stripped" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                    <span class="text-outline text-[10px]">Comments</span>
+                  </div>
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2.5 rounded-xl flex flex-col items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[16px] text-secondary">text_decrease</span>
+                    <span id="receipt-phrases-compacted" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                    <span class="text-outline text-[10px]">Phrases</span>
                   </div>
                 </div>
               </div>
@@ -617,37 +674,72 @@
         lastReceiptData = receipt;
         document.getElementById('raw-json-receipt').textContent = JSON.stringify(receipt, null, 2);
 
-        document.getElementById('receipt-badge').textContent = receipt.cache || 'MISS';
+        const cacheTag = document.getElementById('receipt-cache-tag');
+        cacheTag.textContent = receipt.cache || 'MISS';
         if (receipt.cache === 'SOFT_HIT' && receipt.soft_hit_verification && receipt.soft_hit_verification.verdict === 'accept') {
-          document.getElementById('receipt-badge').textContent = 'SOFT_HIT ✓ VERIFIED';
+          cacheTag.textContent = 'SOFT_HIT VERIFIED';
         } else if (receipt.strategies && receipt.strategies.includes('soft_hit_rejected')) {
-          document.getElementById('receipt-badge').textContent = 'MISS (soft hit rejected)';
-        }
-        if (receipt.truncated) {
-          document.getElementById('receipt-badge').textContent += ' · TRUNCATED';
+          cacheTag.textContent = 'MISS (rejected)';
         }
         if (receipt.cache === 'EXACT_HIT' || receipt.cache === 'HIT') {
-          document.getElementById('receipt-badge').className = 'px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-code text-[11px] font-semibold animate-pulse';
+          cacheTag.className = 'px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-code text-[10px] font-semibold animate-pulse';
         } else {
-          document.getElementById('receipt-badge').className = 'px-2 py-0.5 rounded-full bg-surface-container-high dark:bg-slate-700 text-primary dark:text-primary-fixed font-code text-[11px] font-semibold';
+          cacheTag.className = 'px-2 py-0.5 rounded-full bg-surface-container-high dark:bg-slate-700 text-primary dark:text-blue-300 font-code text-[10px] font-semibold';
         }
+        document.getElementById('receipt-badge').textContent = cacheTag.textContent;
+        document.getElementById('receipt-badge').className = cacheTag.className;
+        document.getElementById('receipt-meta').textContent = `Req #${(receipt.request_id || '').substring(0, 8)} \u00b7 ${receipt.provider || 'cache'}`;
 
-        document.getElementById('receipt-meta').textContent = `Req #${(receipt.request_id || '').substring(0, 8)} · ${receipt.provider || 'cache'}`;
-        document.getElementById('receipt-raw-in').textContent = (receipt.raw_input_tokens || 0) + ' tokens';
-        document.getElementById('receipt-opt-in').textContent = (receipt.optimized_input_tokens || 0) + ' tokens';
-        // Label whose tokenizer produced the upstream number. Provider counts use the
-        // provider's own tokenizer and are never subtracted from our estimates.
+        const rawTokens = receipt.raw_input_tokens || 0;
+        const savedTokens = receipt.saved_input_tokens || 0;
+        const optimizedTokens = receipt.optimized_input_tokens || 0;
+        const savingsPct = rawTokens > 0 ? ((savedTokens / rawTokens) * 100) : 0;
+
+        document.getElementById('receipt-savings-pct').textContent = savingsPct.toFixed(1) + '%';
+        document.getElementById('receipt-saved-count').textContent = savedTokens.toLocaleString();
+
+        const optPct = rawTokens > 0 ? Math.round((optimizedTokens / rawTokens) * 100) : 0;
+        const savedPct = rawTokens > 0 ? Math.round((savedTokens / rawTokens) * 100) : 0;
+        setTimeout(() => {
+          document.getElementById('receipt-bar-optimized').style.width = optPct + '%';
+          document.getElementById('receipt-bar-saved').style.width = savedPct + '%';
+        }, 50);
+
+        document.getElementById('receipt-raw-in').textContent = rawTokens.toLocaleString() + ' tok';
+        document.getElementById('receipt-opt-in').textContent = optimizedTokens.toLocaleString() + ' tok';
+        document.getElementById('receipt-net-spared').textContent = savedTokens.toLocaleString() + ' tok';
         const upstreamSource = receipt.upstream_token_source === 'provider' ? ' (billed)'
           : receipt.upstream_token_source === 'cache' ? '' : ' (est.)';
-        document.getElementById('receipt-upstream-in').textContent = (receipt.upstream_input_tokens || 0) + ' tokens' + upstreamSource;
-        document.getElementById('receipt-output-tok').textContent = (receipt.output_tokens || 0) + ' tokens';
-        document.getElementById('receipt-net-spared').textContent = (receipt.saved_input_tokens || 0) + ' tokens';
-        document.getElementById('receipt-cost-spared').textContent = `${(receipt.saved_input_tokens || 0)} tokens spared`;
+        document.getElementById('receipt-upstream-in').textContent = (receipt.upstream_input_tokens || 0).toLocaleString() + ' tok' + upstreamSource;
+        document.getElementById('receipt-output-tok').textContent = (receipt.output_tokens || 0).toLocaleString() + ' tok';
+
+        const stratList = document.getElementById('receipt-strategies-list');
+        stratList.innerHTML = '';
+        const strategyIcons = {
+          'guard_mode': '\u{1F6E1}\uFE0F', 'secret_redaction': '\u{1F510}', 'pii_redaction': '\u{1F464}',
+          'note_deduplication': '\u{1F4DD}', 'code_pruning': '\u2702\uFE0F', 'comment_stripping': '\u{1F4AC}',
+          'log_folding': '\u{1F4CB}', 'json_compression': '\u{1F4E6}', 'phrase_compaction': '\u270D\uFE0F',
+          'structural_normalization': '\u{1F4D0}', 'conversation_shrinker': '\u{1F5DC}\uFE0F',
+          'exact_cache': '\u26A1', 'semantic_cache': '\u{1F9E0}', 'semantic_cache_soft': '\u{1F9E0}',
+          'provider_proxy': '\u2601\uFE0F', 'provider_waterfall': '\u{1F504}',
+        };
+        if (receipt.strategies && receipt.strategies.length > 0) {
+          receipt.strategies.forEach(s => {
+            const pill = document.createElement('span');
+            const icon = strategyIcons[s] || '\u2699\uFE0F';
+            const label = s.replace(/_/g, ' ');
+            pill.className = 'px-2 py-1 rounded-lg bg-surface-container-low dark:bg-slate-800 text-[11px] text-on-surface dark:text-slate-300 font-medium flex items-center gap-1';
+            pill.innerHTML = `<span>${icon}</span><span>${label}</span>`;
+            stratList.appendChild(pill);
+          });
+        }
 
         document.getElementById('receipt-secrets').textContent = (receipt.secrets_redacted || 0).toString();
         document.getElementById('receipt-pii').textContent = (receipt.pii_redacted || 0).toString();
         document.getElementById('receipt-logs-folded').textContent = (receipt.logs_folded || 0).toString();
         document.getElementById('receipt-json-compact').textContent = (receipt.json_compressed || 0).toString();
+        document.getElementById('receipt-comments-stripped').textContent = (receipt.comments_stripped || 0).toString();
+        document.getElementById('receipt-phrases-compacted').textContent = (receipt.phrases_compacted || 0).toString();
 
         if (receipt.study && receipt.study.topic) {
           document.getElementById('header-topic').textContent = receipt.study.topic;
@@ -760,6 +852,11 @@
           const answer = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '';
           const receipt = data.tokenshield;
 
+          const rawTok = receipt ? (receipt.raw_input_tokens || 0) : 0;
+          const optTok = receipt ? (receipt.optimized_input_tokens || 0) : 0;
+          const savedTok = receipt ? (receipt.saved_input_tokens || 0) : 0;
+          const pct = rawTok > 0 ? ((savedTok / rawTok) * 100).toFixed(1) : '0.0';
+
           // Add assistant message bubble
           const isCacheHit = receipt && (receipt.cache === 'EXACT_HIT' || receipt.cache === 'HIT');
           const assistDiv = document.createElement('div');
@@ -779,16 +876,22 @@
                 <div class="text-[14px] text-on-surface dark:text-slate-200 leading-relaxed whitespace-pre-wrap">${formatMarkdown(answer)}</div>
                 
                 <div class="pt-1">
-                  <div class="inline-flex flex-wrap items-center gap-2 ${isCacheHit ? 'bg-secondary-fixed/40' : 'bg-surface-container-low dark:bg-slate-800'} px-3 py-1.5 rounded-xl text-[11px]">
-                    <span class="flex items-center gap-1 font-semibold ${isCacheHit ? 'text-secondary' : 'text-primary dark:text-primary-fixed'}">
-                      <span class="material-symbols-outlined text-[14px]">shield</span>
-                      ${receipt ? `Saved ${receipt.saved_input_tokens} input tok` : ''}
+                  <div class="inline-flex flex-wrap items-center gap-2 ${isCacheHit ? 'bg-secondary-fixed/30 border border-secondary/40' : 'bg-surface-container-low dark:bg-slate-800 border border-outline-variant/30'} px-3 py-1.5 rounded-xl text-[11px]">
+                    <span class="flex items-center gap-1 font-semibold ${isCacheHit ? 'text-secondary' : 'text-primary dark:text-blue-400'}">
+                      <span class="material-symbols-outlined text-[14px]">tune</span>
+                      ${receipt ? `${rawTok} &rarr; ${optTok} tok` : ''}
                     </span>
                     <span class="text-outline-variant">•</span>
-                    <span class="font-code">${receipt ? receipt.cache : 'OK'}</span>
-                    ${receipt && receipt.logs_folded > 0 ? `<span class="text-outline-variant">•</span><span>${receipt.logs_folded} logs folded</span>` : ''}
-                    ${receipt && receipt.json_compressed > 0 ? `<span class="text-outline-variant">•</span><span>${receipt.json_compressed} json minified</span>` : ''}
-                    <button class="inspect-btn ml-1 font-semibold text-primary dark:text-primary-fixed hover:underline">Inspect Receipt →</button>
+                    <span class="font-bold text-secondary dark:text-emerald-400 flex items-center gap-0.5">
+                      <span class="material-symbols-outlined text-[13px]">savings</span>
+                      Saved ${savedTok} (${pct}%)
+                    </span>
+                    <span class="text-outline-variant">•</span>
+                    <span class="font-code text-[10px] px-1.5 py-0.5 rounded font-semibold ${isCacheHit ? 'bg-secondary text-white' : 'bg-surface-container-high dark:bg-slate-700 text-on-surface dark:text-slate-200'}">${receipt ? receipt.cache : 'OK'}</span>
+                    <button class="inspect-btn ml-1 font-semibold text-primary dark:text-primary-fixed hover:underline flex items-center gap-0.5 cursor-pointer">
+                      <span>Inspect Audit</span>
+                      <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+                    </button>
                   </div>
                 </div>
               </div>
