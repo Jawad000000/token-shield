@@ -29,6 +29,10 @@ from app.log_folding import fold_logs_in_messages
 from app.memory import deduplicate_session_notes
 from app.normalizer import normalize_messages
 from app.phrase_compactor import compact_phrases_in_messages
+from app.response_summarizer import summarize_assistant_responses
+from app.sentence_dedup import dedup_sentences_in_messages
+from app.history_filter import filter_query_aware_history
+from app.preamble_stripper import strip_preambles_in_messages
 from app.providers import ProviderError, ProviderRouter
 from app.recommendations import build_recommendations
 from app.shrinker import shrink_conversation
@@ -122,6 +126,10 @@ def set_tokenshield_headers(response: Response, receipt: dict[str, Any]) -> None
     response.headers["x-tokenshield-code-pruned"] = str(receipt.get("code_pruned", 0))
     response.headers["x-tokenshield-logs-folded"] = str(receipt.get("logs_folded", 0))
     response.headers["x-tokenshield-json-compressed"] = str(receipt.get("json_compressed", 0))
+    response.headers["x-tokenshield-sentences-deduplicated"] = str(receipt.get("sentences_deduplicated", 0))
+    response.headers["x-tokenshield-preambles-stripped"] = str(receipt.get("preambles_stripped", 0))
+    response.headers["x-tokenshield-history-filtered"] = str(receipt.get("history_filtered", 0))
+    response.headers["x-tokenshield-responses-summarized"] = str(receipt.get("responses_summarized", 0))
     response.headers["x-tokenshield-max-output-tokens"] = str(receipt.get("max_output_tokens", 700))
     response.headers["x-tokenshield-saved-output-tokens"] = str(receipt.get("estimated_output_tokens_saved", 0))
     response.headers["x-tokenshield-recommendations-count"] = str(len(receipt.get("recommendations", [])))
@@ -343,8 +351,18 @@ async def chat_completions(
         return cached_chat_response(request, cache_hit.answer, receipt)
 
     # 4. On Cache MISS (Unique Query Token Reduction Pipeline)
+    # Step A0: Deduplicate repeated sentences within user messages
+    sentence_deduped_messages, sentences_deduped_count = dedup_sentences_in_messages(redacted_messages)
+    if sentences_deduped_count > 0:
+        base_strategies.append("sentence_deduplication")
+
+    # Step A0.5: Strip student conversational preambles, greetings, and sign-offs
+    preamble_stripped_messages, preambles_stripped_count = strip_preambles_in_messages(sentence_deduped_messages)
+    if preambles_stripped_count > 0:
+        base_strategies.append("preamble_stripping")
+
     # Step A: Deduplicate repeated notes in the session
-    deduped_messages, notes_deduped_count = deduplicate_session_notes(redacted_messages, session_id)
+    deduped_messages, notes_deduped_count = deduplicate_session_notes(preamble_stripped_messages, session_id)
     if notes_deduped_count > 0:
         base_strategies.append("note_deduplication")
 
@@ -383,9 +401,19 @@ async def chat_completions(
     if norm_mods_count > 0:
         base_strategies.append("structural_normalization")
 
+    # Step D4.5: Query-aware history filtering (prune off-topic historical turns)
+    history_filtered_messages, history_filtered_count = filter_query_aware_history(normalized_messages)
+    if history_filtered_count > 0:
+        base_strategies.append("history_filtering")
+
+    # Step D5: Summarize older assistant responses in conversation history
+    response_summarized_messages, responses_summarized_count = summarize_assistant_responses(history_filtered_messages)
+    if responses_summarized_count > 0:
+        base_strategies.append("response_summarization")
+
     # Step E: Shrink multi-turn conversation and inject answer budget directive
     optimized_messages, shrink_result = shrink_conversation(
-        normalized_messages,
+        response_summarized_messages,
         requested_budget_mode=budget_mode,
         raw_tokens=raw_input_tokens,
     )
@@ -400,6 +428,8 @@ async def chat_completions(
         optimized_messages = redacted_messages
         optimized_input_tokens = raw_input_tokens
         saved_input_tokens = 0
+        sentences_deduped_count = 0
+        preambles_stripped_count = 0
         notes_deduped_count = 0
         turns_shrunk_count = 0
         code_pruned_count = 0
@@ -407,6 +437,8 @@ async def chat_completions(
         json_compressed_count = 0
         comments_stripped_count = 0
         phrases_compacted_count = 0
+        history_filtered_count = 0
+        responses_summarized_count = 0
         # Revert misleading strategies
         base_strategies = [s for s in base_strategies if s in ("guard_mode", "secret_redaction", "pii_redaction")]
         base_strategies.append("optimization_reverted_no_savings")
@@ -508,6 +540,10 @@ async def chat_completions(
         "json_compressed": json_compressed_count,
         "comments_stripped": comments_stripped_count,
         "phrases_compacted": phrases_compacted_count,
+        "sentences_deduplicated": sentences_deduped_count,
+        "preambles_stripped": preambles_stripped_count,
+        "history_filtered": history_filtered_count,
+        "responses_summarized": responses_summarized_count,
         "study": study_receipt,
     }
     receipt["recommendations"] = build_recommendations(receipt)

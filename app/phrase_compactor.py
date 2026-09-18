@@ -54,6 +54,32 @@ _PHRASE_MAP_RAW: list[tuple[str, str]] = [
     ("in close proximity to", "near"),
     ("a sufficient number of", "enough"),
     ("in the majority of cases", "usually"),
+    # ── Study / conversational filler patterns ───────────────────────────
+    # These target verbose student preambles that LLMs parse identically
+    # in their shorter form.  Only prose outside code blocks is affected.
+    ("can you please explain to me in detail", "explain"),
+    ("can you please explain to me", "explain"),
+    ("could you please explain to me", "explain"),
+    ("can you explain to me", "explain"),
+    ("could you explain to me", "explain"),
+    ("could you help me understand", "explain"),
+    ("can you help me understand", "explain"),
+    ("could you break it down for me", "explain"),
+    ("I really need help understanding", "help me understand"),
+    ("I am really struggling with", "I struggle with"),
+    ("I am really confused about", "I am confused about"),
+    ("I keep getting confused about", "I am confused about"),
+    ("what I am trying to understand is", "my question:"),
+    ("what I want to understand is", "my question:"),
+    ("so basically what I mean is", "meaning:"),
+    ("I was wondering if you could", "please"),
+    ("I was just wondering if", ""),
+    ("sorry I pasted that", "pasted"),
+    ("ignore the messy parts", ""),
+    ("ignore the repeats", ""),
+    ("here is everything I tried", "my attempts:"),
+    ("none of these are working", "these failed"),
+    ("I really need to", "I need to"),
 ]
 
 # Pre-compile regexes for case-insensitive word-boundary matching

@@ -34,9 +34,9 @@ Add your provider API keys (Google, Groq, Vercel, etc.) inside `.env.local`.
 python -m uvicorn app.main:app --reload
 ```
 
-### 4. Run Test Suite (58 Tests Passing)
+### 4. Run Test Suite (174 Tests Passing)
 ```bash
-python -m pytest -p no:cacheprovider --basetemp=.tokenshield/pytest_temp -v
+python -m pytest -p no:cacheprovider --basetemp=.tokenshield/pytest_temp -q
 ```
 
 ## Secret Setup
