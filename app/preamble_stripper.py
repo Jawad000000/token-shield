@@ -30,14 +30,28 @@ GREETINGS_RE = re.compile(GREETING_PATTERN, re.IGNORECASE)
 
 # 2. Courtesy / pleasantry sentences at the beginning
 PLEASANTRY_PATTERN = (
-    r"^(?:hope\s+(?:you\s+are|you're)\s+(?:doing\s+well|having\s+a\s+(?:great|good)\s+day|good)"
-    r"|i\s+hope\s+(?:this\s+finds\s+you\s+well|you\s+are\s+well|you're\s+doing\s+well))"
+    r"^(?:(?:i\s+)?hope\s+(?:you\s+are|you're)\s+(?:doing\s+well|having\s+a\s+(?:great|good|wonderful|nice)\s+day|well|good)"
+    r"|i\s+hope\s+(?:this\s+finds\s+you\s+well|all\s+is\s+well|you\s+are\s+well|you're\s+doing\s+well))"
     r"[,!.:;\s]*"
 )
 PLEASANTRY_STARTS_RE = re.compile(PLEASANTRY_PATTERN, re.IGNORECASE)
 
 # 3. Student meta-context / status updates
 STUDENT_PREAMBLE_PATTERNS = [
+    # Panic / anxiety / stress
+    re.compile(
+        r"\b(?:i\s+am|i'm)\s+(?:really\s+|extremely\s+|super\s+|very\s+)?(?:stressed|anxious|panicking|in\s+a\s+state\s+of\s+panic|freaking\s+out|overwhelmed)"
+        r"[^.!?]*?(?:[.!?]|\band\b|\bso\b|\bbecause\b)\s*",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b(?:i\s+really\s+really\s+need|i\s+really\s+need|i\s+urgently\s+need)\s+(?:your\s+help|help|assistance|to\s+understand)[^.!?]*?[.!?]\s*",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b(?:i\s+cannot\s+understand|i\s+don't\s+understand|i\s+can't\s+get\s+my\s+head\s+around)\s+[^.!?]*?[.!?]\s*",
+        re.IGNORECASE,
+    ),
     # Preparing for exam / class
     re.compile(
         r"\b(?:i\s+am|i'm)\s+(?:currently\s+)?(?:preparing|studying)\s+(?:for\s+)?"
@@ -47,8 +61,8 @@ STUDENT_PREAMBLE_PATTERNS = [
     ),
     # Have an exam coming up
     re.compile(
-        r"\b(?:i\s+have|i've\s+got)\s+(?:an?\s+)?[^.!?]*?(?:exam|test|quiz|interview|class|deadline)"
-        r"[^.!?]*?(?:tomorrow|today|soon|coming\s+up|in\s+an?\s+hour)[^.!?]*?(?:[.!?]|\band\b)\s*",
+        r"\b(?:because\s+)?(?:i\s+have|i've\s+got)\s+(?:my\s+|an?\s+)?[^.!?]*?(?:exam|test|quiz|interview|midterm|final|class|deadline)"
+        r"[^.!?]*?(?:tomorrow|today|soon|coming\s+up|in\s+an?\s+hour|morning|next\s+week)[^.!?]*?(?:[.!?]|\band\b)\s*",
         re.IGNORECASE,
     ),
     # Beginner status
@@ -92,11 +106,13 @@ STUDENT_PREAMBLE_PATTERNS = [
 
 # 4. Sign-offs and pleasantries (can be chained at end of user message)
 SINGLE_SIGNOFF = (
-    r"(?:thanks\s+in\s+advance|"
-    r"thank\s+you(?:\s+(?:so\s+much|very\s+much|a\s+lot))?|"
-    r"thanks(?:\s+(?:so\s+much|very\s+much|a\s+lot))?|"
-    r"please\s+help(?:\s+me)?(?:\s+asap|\s+soon)?|"
-    r"any\s+help\s+(?:would\s+be|is)\s+(?:greatly\s+)?appreciated)"
+    r"(?:thanks\s+(?:so\s+much\s+)?in\s+advance(?:\s+for\s+(?:your\s+)?help)?"
+    r"|thank\s+you(?:\s+(?:so\s+much|very\s+much|a\s+lot))?(?:\s+in\s+advance)?(?:\s+for\s+(?:your\s+)?(?:help|time|assistance))?"
+    r"|thanks(?:\s+(?:so\s+much|very\s+much|a\s+lot))?(?:\s+in\s+advance)?"
+    r"|(?:i\s+)?(?:truly\s+)?appreciate\s+(?:everything\s+you\s+do|your\s+help|it)"
+    r"|have\s+a\s+(?:great|wonderful|good|nice)\s+(?:day|rest\s+of\s+(?:your\s+)?day)"
+    r"|please\s+help(?:\s+me)?(?:\s+asap|\s+soon)?"
+    r"|any\s+help\s+(?:would\s+be|is)\s+(?:greatly\s+)?appreciated)"
 )
 SIGNOFF_CHAIN_RE = re.compile(
     rf"(?:[,.\s\-—]+|(?<=[?!]))*(?:{SINGLE_SIGNOFF}[,.\s!]*)+$",

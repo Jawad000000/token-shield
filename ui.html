@@ -320,30 +320,58 @@
               </div>
             </div>
 
-            <!-- SUGGESTED PROMPT CHIPS -->
-            <div class="w-full pt-1">
-              <div class="flex items-center justify-between pb-1.5">
-                <span class="text-[11px] text-on-surface-variant dark:text-slate-400 font-medium flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[14px] text-primary">auto_fix_high</span>
-                  Cost-Optimized Prompt Actions
+            <!-- ⭐ HACKATHON JUDGE SHOWCASE (1-CLICK LIVE DEMOS) -->
+            <div class="w-full pt-1 pb-1">
+              <div class="flex items-center justify-between pb-2 px-0.5">
+                <span class="text-[12px] font-bold bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-500 bg-clip-text text-transparent flex items-center gap-1.5 uppercase tracking-wider">
+                  <span class="text-[15px]">⭐</span> Judge Live Demo Showcase
                 </span>
-                <span class="font-code text-[11px] text-secondary font-medium">~70% cheaper than open chat</span>
+                <span class="font-code text-[11px] text-secondary dark:text-emerald-400 font-semibold px-2 py-0.5 rounded-full bg-secondary-fixed/30 dark:bg-emerald-950/40 border border-secondary/30">1-Click Instant Optimization</span>
               </div>
-              <div class="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none">
-                <button class="prompt-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-lowest dark:bg-slate-800 hover:bg-surface-container-high dark:hover:bg-slate-700 text-on-surface dark:text-slate-200 text-[12px] shadow-sm transition-colors flex items-center gap-1.5 shrink-0" data-chip="Explain binary search invariants in 3 short bullet points.">
-                  <span>✨</span><span>Explain simply</span>
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                <button class="judge-chip p-2.5 rounded-xl bg-surface-container-lowest dark:bg-[#0f172a] hover:bg-surface-container-high dark:hover:bg-slate-800 text-left border border-outline-variant/30 hover:border-primary transition-all shadow-xs group cursor-pointer flex flex-col justify-between" data-scenario="code">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[16px]">💻</span>
+                    <span class="text-[10px] font-code font-bold text-secondary dark:text-emerald-400 px-1.5 py-0.5 rounded bg-secondary-fixed/40 dark:bg-emerald-900/40">-61%</span>
+                  </div>
+                  <div class="font-semibold text-[11px] text-on-surface dark:text-white mt-1 group-hover:text-primary">Python Code</div>
+                  <div class="text-[10px] text-outline truncate">Comment stripping</div>
                 </button>
-                <button class="prompt-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-lowest dark:bg-slate-800 hover:bg-surface-container-high dark:hover:bg-slate-700 text-on-surface dark:text-slate-200 text-[12px] shadow-sm transition-colors flex items-center gap-1.5 shrink-0" data-chip="Give me 1 hint only without giving away the full answer to solve two-sum.">
-                  <span>💡</span><span>Give hint only</span>
+
+                <button class="judge-chip p-2.5 rounded-xl bg-surface-container-lowest dark:bg-[#0f172a] hover:bg-surface-container-high dark:hover:bg-slate-800 text-left border border-outline-variant/30 hover:border-primary transition-all shadow-xs group cursor-pointer flex flex-col justify-between" data-scenario="json">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[16px]">📊</span>
+                    <span class="text-[10px] font-code font-bold text-secondary dark:text-emerald-400 px-1.5 py-0.5 rounded bg-secondary-fixed/40 dark:bg-emerald-900/40">-54%</span>
+                  </div>
+                  <div class="font-semibold text-[11px] text-on-surface dark:text-white mt-1 group-hover:text-primary">Indented JSON</div>
+                  <div class="text-[10px] text-outline truncate">Schema crusher</div>
                 </button>
-                <button class="prompt-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-lowest dark:bg-slate-800 hover:bg-surface-container-high dark:hover:bg-slate-700 text-on-surface dark:text-slate-200 text-[12px] shadow-sm transition-colors flex items-center gap-1.5 shrink-0" data-chip="Quiz me with 1 tricky edge-case question on binary search mid-point calculation.">
-                  <span>🎯</span><span>Quiz me</span>
+
+                <button class="judge-chip p-2.5 rounded-xl bg-surface-container-lowest dark:bg-[#0f172a] hover:bg-surface-container-high dark:hover:bg-slate-800 text-left border border-outline-variant/30 hover:border-primary transition-all shadow-xs group cursor-pointer flex flex-col justify-between" data-scenario="log">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[16px]">🪵</span>
+                    <span class="text-[10px] font-code font-bold text-secondary dark:text-emerald-400 px-1.5 py-0.5 rounded bg-secondary-fixed/40 dark:bg-emerald-900/40">-54%</span>
+                  </div>
+                  <div class="font-semibold text-[11px] text-on-surface dark:text-white mt-1 group-hover:text-primary">Crash Log</div>
+                  <div class="text-[10px] text-outline truncate">Log & stack fold</div>
                 </button>
-                <button class="prompt-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-lowest dark:bg-slate-800 hover:bg-surface-container-high dark:hover:bg-slate-700 text-on-surface dark:text-slate-200 text-[12px] shadow-sm transition-colors flex items-center gap-1.5 shrink-0" data-chip="Can you summarize dynamic programming grid problems into 3 flashcards?">
-                  <span>🃏</span><span>Make flashcards</span>
+
+                <button class="judge-chip p-2.5 rounded-xl bg-surface-container-lowest dark:bg-[#0f172a] hover:bg-surface-container-high dark:hover:bg-slate-800 text-left border border-outline-variant/30 hover:border-primary transition-all shadow-xs group cursor-pointer flex flex-col justify-between" data-scenario="student">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[16px]">🎓</span>
+                    <span class="text-[10px] font-code font-bold text-secondary dark:text-emerald-400 px-1.5 py-0.5 rounded bg-secondary-fixed/40 dark:bg-emerald-900/40">-65%</span>
+                  </div>
+                  <div class="font-semibold text-[11px] text-on-surface dark:text-white mt-1 group-hover:text-primary">Student Panic</div>
+                  <div class="text-[10px] text-outline truncate">Preamble stripper</div>
                 </button>
-                <button class="prompt-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container-lowest dark:bg-slate-800 hover:bg-surface-container-high dark:hover:bg-slate-700 text-on-surface dark:text-slate-200 text-[12px] shadow-sm transition-colors flex items-center gap-1.5 shrink-0" data-chip="Here is my test log:\n[2026-06-13] INFO compiling task_0\n[2026-06-13] INFO compiling task_1\n[2026-06-13] INFO compiling task_2\n[2026-06-13] INFO compiling task_3\nERROR src/main.py:42: ValueError: invalid literal for int() 'abc'">
-                  <span>🪵</span><span>Test Log Folding</span>
+
+                <button class="judge-chip p-2.5 rounded-xl bg-surface-container-lowest dark:bg-[#0f172a] hover:bg-surface-container-high dark:hover:bg-slate-800 text-left border border-outline-variant/30 hover:border-primary transition-all shadow-xs group cursor-pointer flex flex-col justify-between" data-scenario="cache">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[16px]">⚡</span>
+                    <span class="text-[10px] font-code font-bold text-primary dark:text-blue-300 px-1.5 py-0.5 rounded bg-primary-container/20">100%</span>
+                  </div>
+                  <div class="font-semibold text-[11px] text-on-surface dark:text-white mt-1 group-hover:text-primary">Repeat Query</div>
+                  <div class="text-[10px] text-outline truncate">Semantic cache hit</div>
                 </button>
               </div>
             </div>
@@ -437,6 +465,27 @@
                   </div>
                 </div>
 
+                <!-- Live Financial & Sustainability Impact Card -->
+                <div class="bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-blue-500/10 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-blue-950/30 border border-secondary/30 rounded-xl p-3 flex flex-col gap-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-secondary dark:text-emerald-400 flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[15px]">monetization_on</span>
+                      Financial &amp; Eco ROI
+                    </span>
+                    <span id="receipt-cost-saved" class="font-code font-bold text-[13px] text-secondary dark:text-emerald-400">$0.00 saved</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-[11px] pt-1.5 border-t border-secondary/20">
+                    <div class="flex flex-col">
+                      <span class="text-[10px] text-on-surface-variant dark:text-slate-400">Campus/Team (100k/mo)</span>
+                      <span id="receipt-annual-projection" class="font-code font-semibold text-primary dark:text-blue-300 text-[12px]">$0/yr saved</span>
+                    </div>
+                    <div class="flex flex-col items-end">
+                      <span class="text-[10px] text-on-surface-variant dark:text-slate-400">CO₂ Prevented</span>
+                      <span id="receipt-carbon-saved" class="font-code font-semibold text-secondary dark:text-emerald-400 text-[12px]">0.0g CO₂</span>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Token Flow Breakdown -->
                 <div class="bg-surface-container-low dark:bg-slate-800/80 rounded-xl p-3 space-y-0">
                   <div class="flex items-center justify-between py-2 border-b border-outline-variant/20">
@@ -515,6 +564,21 @@
                     <span class="material-symbols-outlined text-[16px] text-secondary">text_decrease</span>
                     <span id="receipt-phrases-compacted" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
                     <span class="text-outline text-[10px]">Phrases</span>
+                  </div>
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2.5 rounded-xl flex flex-col items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[16px] text-indigo-400">repeat</span>
+                    <span id="receipt-sentences-dedup" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                    <span class="text-outline text-[10px]">Sentences</span>
+                  </div>
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2.5 rounded-xl flex flex-col items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[16px] text-emerald-400">cleaning_services</span>
+                    <span id="receipt-preambles-stripped" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                    <span class="text-outline text-[10px]">Preambles</span>
+                  </div>
+                  <div class="bg-surface-container-low dark:bg-slate-800/80 p-2.5 rounded-xl flex flex-col items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[16px] text-amber-400">filter_list</span>
+                    <span id="receipt-history-filtered" class="font-code font-bold text-on-surface dark:text-slate-200">0</span>
+                    <span class="text-outline text-[10px]">History Cuts</span>
                   </div>
                 </div>
               </div>
@@ -720,6 +784,8 @@
           'note_deduplication': '\u{1F4DD}', 'code_pruning': '\u2702\uFE0F', 'comment_stripping': '\u{1F4AC}',
           'log_folding': '\u{1F4CB}', 'json_compression': '\u{1F4E6}', 'phrase_compaction': '\u270D\uFE0F',
           'structural_normalization': '\u{1F4D0}', 'conversation_shrinker': '\u{1F5DC}\uFE0F',
+          'sentence_deduplication': '\u{1F501}', 'preamble_stripping': '\u{1F9F9}',
+          'history_filtering': '\u2702\uFE0F', 'response_summarization': '\u{1F4C3}',
           'exact_cache': '\u26A1', 'semantic_cache': '\u{1F9E0}', 'semantic_cache_soft': '\u{1F9E0}',
           'provider_proxy': '\u2601\uFE0F', 'provider_waterfall': '\u{1F504}',
         };
@@ -740,6 +806,25 @@
         document.getElementById('receipt-json-compact').textContent = (receipt.json_compressed || 0).toString();
         document.getElementById('receipt-comments-stripped').textContent = (receipt.comments_stripped || 0).toString();
         document.getElementById('receipt-phrases-compacted').textContent = (receipt.phrases_compacted || 0).toString();
+        document.getElementById('receipt-sentences-dedup').textContent = (receipt.sentences_deduped || 0).toString();
+        document.getElementById('receipt-preambles-stripped').textContent = (receipt.preambles_stripped || 0).toString();
+        document.getElementById('receipt-history-filtered').textContent = (receipt.history_filtered || 0).toString();
+
+        // Financial & Eco ROI
+        const costPerToken = 0.000005; // $5.00 / 1M tokens blend
+        const costSaved = savedTokens * costPerToken;
+        const costSavedStr = costSaved > 0
+          ? (costSaved < 0.01 ? `$${costSaved.toFixed(4)} saved` : `$${costSaved.toFixed(3)} saved`)
+          : '$0.00 saved';
+        document.getElementById('receipt-cost-saved').textContent = costSavedStr;
+
+        const annualSaved = savedTokens * 1200000 * costPerToken; // 100k requests/month campus projection
+        document.getElementById('receipt-annual-projection').textContent = annualSaved > 0
+          ? `$${Math.round(annualSaved).toLocaleString()}/yr saved`
+          : '$0/yr saved';
+
+        const carbonGrams = (savedTokens * 0.001).toFixed(2); // ~0.001g CO2/token
+        document.getElementById('receipt-carbon-saved').textContent = `${carbonGrams}g CO₂`;
 
         if (receipt.study && receipt.study.topic) {
           document.getElementById('header-topic').textContent = receipt.study.topic;
@@ -1031,6 +1116,161 @@
           e.preventDefault();
           sendPrompt();
         }
+      });
+
+      // Judge Showcase Scenarios
+      const SHOWCASE_SCENARIOS = {
+        code: `Can you review and refactor this order calculation function?
+
+\`\`\`python
+# filename: order_service.py
+# Module for processing customer batch orders and discount calculation
+# Author: engineering-team
+# Version: 1.4.2
+
+def process_orders(orders, discount_rate, tax_rate):
+    # Step 1: Initialize all running accumulator variables to zero
+    subtotal = 0.0  # running subtotal of all items
+    total_tax = 0.0  # running tax accumulated
+    total_discount = 0.0  # running discount accumulated
+    final_total = 0.0  # final computed grand total
+    
+    # Step 2: Loop through each order item in the batch list
+    for order in orders:
+        # Check whether this order record has the valid flag set
+        if not order.get("valid", False):
+            # Skip this invalid or cancelled order record
+            continue
+            
+        # Extract the base amount for the order
+        amt = order.get("amount", 0.0)  # item base price
+        
+        # Calculate the discount dollar amount for this specific order
+        disc = amt * discount_rate  # discount value
+        # Subtract discount from amount to obtain the taxable balance
+        taxable = amt - disc  # balance subject to tax
+        # Compute the sales tax on the taxable balance
+        tax = taxable * tax_rate  # tax value
+        
+        # Accumulate the base item amount to subtotal
+        subtotal += amt  # add to running subtotal
+        # Accumulate the discount dollar amount to total discount
+        total_discount += disc  # add to running discount
+        # Accumulate the sales tax dollar amount to total tax
+        total_tax += tax  # add to running tax
+        
+    # Step 3: Compute the final grand total after all deductions
+    final_total = subtotal - total_discount + total_tax
+    
+    # Return dictionary with all computed order summary totals
+    return {
+        "subtotal": subtotal,  # final subtotal
+        "discount": total_discount,  # final discount
+        "tax": total_tax,  # final tax
+        "grand_total": final_total  # final total
+    }
+\`\`\`
+Does this handle empty orders properly?`,
+
+        json: `Here is the telemetry batch from our sensor cluster:
+
+\`\`\`json
+[
+  {
+    "sensor_id": "temp_probe_01",
+    "reading_celsius": 24.2,
+    "status": "NORMAL",
+    "battery_pct": 98.5,
+    "firmware_version": "v3.1.2",
+    "location_zone": "warehouse-north-rack-01"
+  },
+  {
+    "sensor_id": "temp_probe_02",
+    "reading_celsius": 24.8,
+    "status": "NORMAL",
+    "battery_pct": 97.1,
+    "firmware_version": "v3.1.2",
+    "location_zone": "warehouse-north-rack-02"
+  },
+  {
+    "sensor_id": "temp_probe_03",
+    "reading_celsius": 28.5,
+    "status": "WARNING",
+    "battery_pct": 94.0,
+    "firmware_version": "v3.1.2",
+    "location_zone": "warehouse-north-rack-03"
+  },
+  {
+    "sensor_id": "temp_probe_04",
+    "reading_celsius": 24.1,
+    "status": "NORMAL",
+    "battery_pct": 99.0,
+    "firmware_version": "v3.1.2",
+    "location_zone": "warehouse-north-rack-04"
+  },
+  {
+    "sensor_id": "temp_probe_05",
+    "reading_celsius": 24.3,
+    "status": "NORMAL",
+    "battery_pct": 96.4,
+    "firmware_version": "v3.1.2",
+    "location_zone": "warehouse-north-rack-05"
+  },
+  {
+    "sensor_id": "temp_probe_06",
+    "reading_celsius": 31.2,
+    "status": "CRITICAL",
+    "battery_pct": 91.2,
+    "firmware_version": "v3.1.2",
+    "location_zone": "warehouse-north-rack-06"
+  }
+]
+\`\`\`
+Which sensors exceeded the warning threshold?`,
+
+        log: `Can you analyze this server error stack trace and tell me what caused the crash?
+
+[2026-09-18 14:02:00] INFO compiling module core::worker::task_0 (incremental)
+[2026-09-18 14:02:01] INFO compiling module core::worker::task_1 (incremental)
+[2026-09-18 14:02:02] INFO compiling module core::worker::task_2 (incremental)
+[2026-09-18 14:02:03] INFO compiling module core::worker::task_3 (incremental)
+[2026-09-18 14:02:04] INFO compiling module core::worker::task_4 (incremental)
+[2026-09-18 14:02:05] INFO compiling module core::worker::task_5 (incremental)
+[2026-09-18 14:02:06] INFO compiling module core::worker::task_6 (incremental)
+[2026-09-18 14:02:07] INFO compiling module core::worker::task_7 (incremental)
+[2026-09-18 14:02:08] INFO compiling module core::worker::task_8 (incremental)
+[2026-09-18 14:02:09] INFO compiling module core::worker::task_9 (incremental)
+[2026-09-18 14:02:10] ERROR src/worker/pool.py:214: ValueError: invalid literal for int() with base 10: 'abc'
+Traceback (most recent call last):
+  File "/workspace/app/main.py", line 42, in process_batch
+    worker_pool.dispatch(item)
+  File "/workspace/app/worker/pool.py", line 214, in dispatch
+    int(item.payload)
+[2026-09-18 14:02:11] INFO compiling module core::net::conn_0 (incremental)
+[2026-09-18 14:02:12] INFO compiling module core::net::conn_1 (incremental)
+[2026-09-18 14:02:13] INFO compiling module core::net::conn_2 (incremental)
+[2026-09-18 14:02:14] INFO compiling module core::net::conn_3 (incremental)
+[2026-09-18 14:02:15] INFO compiling module core::net::conn_4 (incremental)`,
+
+        student: `Hello assistant! I hope you are having a wonderful day! I am extremely stressed right now because I have my university database systems exam tomorrow morning and I really really need your help! I am in a state of panic because I cannot understand indexing!
+
+Could you please explain B+ tree indexing vs Hash indexing step-by-step?
+
+In order to prepare for the test, I need to know the time complexity for point queries and range queries. Furthermore, it is important to note that I need the key pros and cons of each approach.
+
+Thank you so much in advance for your help! I truly appreciate everything you do! Have a great day!`,
+
+        cache: `Explain the difference between ACID properties in relational databases vs BASE consistency in distributed NoSQL databases.`
+      };
+
+      document.querySelectorAll('.judge-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const scenario = chip.getAttribute('data-scenario');
+          if (SHOWCASE_SCENARIOS[scenario]) {
+            promptInput.value = SHOWCASE_SCENARIOS[scenario];
+            sendPrompt();
+          }
+        });
       });
 
       document.querySelectorAll('.prompt-chip').forEach(chip => {
